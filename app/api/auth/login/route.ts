@@ -102,10 +102,26 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error) {
-    console.error('Login error:', error);
+  } catch (error: any) {
+    console.error('Login error details:', error);
+    
+    // Check for database connection / table missing issues
+    const errorMessage = error?.message || '';
+    if (errorMessage.includes('does not exist') || errorMessage.includes('relation') || error?.code === 'P2021') {
+      return NextResponse.json(
+        { error: 'Database tables not found. Please run "npx prisma db push && npx tsx prisma/seed.ts" on your database.' },
+        { status: 500 }
+      );
+    }
+    if (errorMessage.includes('connect') || error?.code === 'P1001' || error?.code === 'P1000') {
+      return NextResponse.json(
+        { error: 'Cannot connect to database. Please check your DATABASE_URL environment variable.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'An unexpected server error occurred during authentication.' },
+      { error: 'An unexpected server error occurred during authentication. Check database connection and environment variables.' },
       { status: 500 }
     );
   }

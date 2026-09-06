@@ -49,8 +49,15 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Quick switch error:', error);
-    return NextResponse.json({ error: 'Failed to switch user' }, { status: 500 });
+    const errorMessage = error?.message || '';
+    if (errorMessage.includes('does not exist') || errorMessage.includes('relation') || error?.code === 'P2021') {
+      return NextResponse.json(
+        { error: 'Database tables not found. Please run "npx prisma db push && npx tsx prisma/seed.ts".' },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ error: 'Failed to switch user. Check database connection.' }, { status: 500 });
   }
 }
