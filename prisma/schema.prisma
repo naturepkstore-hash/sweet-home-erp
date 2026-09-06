@@ -1,0 +1,415 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  INCHARGE
+  ACCOUNT_ASSISTANT
+  HR_REPRESENTATIVE
+  CLERK
+  MOTHER_MAID
+  WAITER
+  COOK
+  COOK_HELPER
+  SWEEPER
+  SECURITY_GUARD
+}
+
+model User {
+  id            String         @id @default(cuid())
+  username      String         @unique
+  email         String         @unique
+  password      String
+  role          Role
+  status        String         @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  permissions   String         @default("[]") // JSON array of fine-grained permission codes
+  lastLogin     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  employee      Employee?
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+model Employee {
+  id                 String               @id @default(cuid())
+  userId             String?              @unique
+  user               User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fullName           String
+  fatherHusbandName  String
+  cnic               String               @unique
+  address            String
+  phoneNumber        String
+  role               Role
+  department         String
+  employmentStatus   String               @default("ACTIVE") // ACTIVE, ON_LEAVE, RESIGNED, TERMINATED
+  emergencyContact   String
+  photo              String?
+  notes              String?
+  permissions        String?              @default("[]")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  attendances        Attendance[]
+  duties             StaffDuty[]
+  assignedChildren   Child[]              @relation("MotherMaidChildren")
+  purchases          Purchase[]
+  financeTxns        FinanceTransaction[]
+}
+
+model Child {
+  id                 String            @id @default(cuid())
+  childId            String            @unique // e.g. "PBM-SHM-001"
+  fullName           String
+  fatherGuardianName String
+  dateOfBirth        DateTime
+  gender             String            // MALE, FEMALE
+  bFormNo            String?
+  admissionNo        String            @unique
+  admissionDate      DateTime
+  guardianName       String?
+  guardianRelation   String?
+  guardianContact    String?
+  address            String?
+  photo              String?
+  status             String            @default("ACTIVE") // ACTIVE, TRANSFERRED, GRADUATED, DEACTIVATED
+  motherMaidId       String?
+  motherMaid         Employee?         @relation("MotherMaidChildren", fields: [motherMaidId], references: [id])
+  roomId             String?
+  room               Room?             @relation(fields: [roomId], references: [id])
+  bedId              String?           @unique
+  bed                Bed?              @relation(fields: [bedId], references: [id])
+  classId            String?
+  class              Class?            @relation(fields: [classId], references: [id])
+  clothingIssued     String?           // JSON or text list of items issued
+  dietaryNotes       String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  documents          ChildDocument[]
+  attendances        Attendance[]
+  medicalRecord      MedicalRecord?
+  medicalVisits      MedicalVisit[]
+  educationRecords   EducationRecord[]
+}
+
+model ChildDocument {
+  id           String   @id @default(cuid())
+  childId      String
+  child        Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  title        String
+  documentType String   // B_FORM, DEATH_CERTIFICATE, ADMISSION_FORM, MEDICAL_REPORT, OTHER
+  fileUrl      String
+  fileSize     String?
+  uploadedAt   DateTime @default(now())
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  description String?
+  rooms       Room[]
+  createdAt   DateTime @default(now())
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  buildingId  String
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  roomNumber  String
+  floor       String   @default("Ground Floor")
+  capacity    Int      @default(8)
+  beds        Bed[]
+  children    Child[]
+  createdAt   DateTime @default(now())
+}
+
+model Bed {
+  id         String   @id @default(cuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  bedNumber  String
+  status     String   @default("AVAILABLE") // AVAILABLE, OCCUPIED, MAINTENANCE
+  child      Child?
+  createdAt  DateTime @default(now())
+}
+
+model Class {
+  id               String            @id @default(cuid())
+  name             String            // Nursery, Prep, Class 1, Class 2 ... Class 10
+  section          String            @default("A")
+  schoolName       String            @default("Sweet Home Campus Multan")
+  academicYear     String            @default("2025-2026")
+  children         Child[]
+  educationRecords EducationRecord[]
+  createdAt        DateTime          @default(now())
+}
+
+model EducationRecord {
+  id            String   @id @default(cuid())
+  childId       String
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  classId       String?
+  class         Class?   @relation(fields: [classId], references: [id])
+  academicYear  String
+  schoolName    String
+  examTerm      String   // First Term, Mid Term, Final Term, Monthly Test
+  totalMarks    Float
+  obtainedMarks Float
+  grade         String
+  remarks       String?
+  createdAt     DateTime @default(now())
+}
+
+model InventoryCategory {
+  id          String          @id @default(cuid())
+  name        String          @unique // Food/Ration, Kitchen, Cleaning, Clothing, General, Medical
+  code        String          @unique
+  description String?
+  items       InventoryItem[]
+  createdAt   DateTime        @default(now())
+}
+
+model InventoryItem {
+  id           String             @id @default(cuid())
+  name         String
+  categoryId   String
+  category     InventoryCategory  @relation(fields: [categoryId], references: [id])
+  unit         String             // kg, liter, packet, box, piece, sack
+  currentStock Float              @default(0)
+  minStock     Float              @default(10)
+  supplier     String?
+  status       String             @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
+  notes        String?
+  transactions StockTransaction[]
+  purchaseItems PurchaseItem[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model StockTransaction {
+  id                String        @id @default(cuid())
+  itemId            String
+  item              InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  transactionType   String        // STOCK_IN, STOCK_OUT, PURCHASE, ISSUE, CONSUMPTION, ADJUSTMENT
+  quantity          Float
+  unit              String
+  date              DateTime      @default(now())
+  responsiblePerson String
+  reason            String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+}
+
+model DailyMenu {
+  id            String   @id @default(cuid())
+  dayOfWeek     String   @unique // MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+  breakfastMenu String
+  lunchMenu     String
+  dinnerMenu    String
+  notes         String?
+  updatedAt     DateTime @updatedAt
+}
+
+model MealRecord {
+  id         String   @id @default(cuid())
+  date       DateTime @default(now())
+  mealType   String   // BREAKFAST, LUNCH, DINNER, SPECIAL
+  menuItem   String
+  childCount Int      @default(0)
+  staffCount Int      @default(0)
+  totalHeads Int      @default(0)
+  preparedBy String
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model KitchenRequest {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  requestedBy String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, FULFILLED
+  items       String   // JSON stringified items with quantities and units
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MedicalRecord {
+  id                String         @id @default(cuid())
+  childId           String         @unique
+  child             Child          @relation(fields: [childId], references: [id], onDelete: Cascade)
+  bloodGroup        String?        // A+, A-, B+, B-, AB+, AB-, O+, O-
+  allergies         String?
+  chronicConditions String?
+  heightCm          Float?
+  weightKg          Float?
+  emergencyNotes    String?
+  updatedAt         DateTime       @updatedAt
+}
+
+model MedicalVisit {
+  id             String   @id @default(cuid())
+  childId        String
+  child          Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  visitDate      DateTime @default(now())
+  doctorName     String
+  clinicHospital String   @default("Civil Hospital Multan / PBM Clinic")
+  symptoms       String?
+  diagnosis      String
+  vitals         String?  // BP, Temp, Pulse etc.
+  prescription   String?
+  treatment      String?
+  notes          String?
+  createdAt      DateTime @default(now())
+}
+
+model Medicine {
+  id          String    @id @default(cuid())
+  name        String
+  genericName String?
+  unit        String    @default("strips") // tablets, syrup, strips, injections, box
+  stock       Int       @default(0)
+  minStock    Int       @default(5)
+  expiryDate  DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
+
+model Supplier {
+  id            String     @id @default(cuid())
+  name          String
+  contactPerson String?
+  phone         String
+  email         String?
+  address       String
+  ntn           String?
+  purchases     Purchase[]
+  createdAt     DateTime   @default(now())
+}
+
+model Purchase {
+  id                  String               @id @default(cuid())
+  purchaseNumber      String               @unique // PO-2026-0001
+  supplierId          String
+  supplier            Supplier             @relation(fields: [supplierId], references: [id])
+  purchaseDate        DateTime             @default(now())
+  totalAmount         Float
+  billNumber          String?
+  paymentStatus       String               @default("PAID") // PAID, PENDING, PARTIAL
+  paymentMethod       String               @default("CHEQUE") // CASH, CHEQUE, BANK_TRANSFER
+  responsiblePersonId String?
+  responsiblePerson   Employee?            @relation(fields: [responsiblePersonId], references: [id])
+  notes               String?
+  items               PurchaseItem[]
+  financeTransaction  FinanceTransaction?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model PurchaseItem {
+  id              String        @id @default(cuid())
+  purchaseId      String
+  purchase        Purchase      @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  itemName        String
+  quantity        Float
+  unitPrice       Float
+  totalPrice      Float
+  unit            String
+}
+
+model ExpenseCategory {
+  id           String               @id @default(cuid())
+  name         String               @unique // Food/Ration, Utilities, Maintenance, Medical, Education, Clothing, Staff Welfare, Misc
+  description  String?
+  transactions FinanceTransaction[]
+  createdAt    DateTime             @default(now())
+}
+
+model FinanceTransaction {
+  id                  String           @id @default(cuid())
+  type                String           // EXPENSE, INCOME, GRANT, DONATION
+  date                DateTime         @default(now())
+  amount              Float
+  categoryId          String?
+  category            ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  description         String
+  responsiblePersonId String?
+  responsiblePerson   Employee?        @relation(fields: [responsiblePersonId], references: [id])
+  referenceNumber     String?          // Cheque / Bill / Voucher #
+  paymentMethod       String           @default("CHEQUE") // CASH, CHEQUE, BANK_TRANSFER, ONLINE
+  purchaseId          String?          @unique
+  purchase            Purchase?        @relation(fields: [purchaseId], references: [id])
+  notes               String?
+  createdAt           DateTime         @default(now())
+}
+
+model Attendance {
+  id         String    @id @default(cuid())
+  date       DateTime  // stored as start-of-day date
+  type       String    // CHILD, EMPLOYEE
+  childId    String?
+  child      Child?    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  status     String    // PRESENT, ABSENT, LEAVE, LATE
+  remarks    String?
+  markedBy   String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([date, childId])
+  @@unique([date, employeeId])
+}
+
+model StaffDuty {
+  id             String   @id @default(cuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  dutyDate       DateTime @default(now())
+  shift          String   @default("MORNING") // MORNING, EVENING, NIGHT
+  tasksCompleted String?  // JSON array of task checklist items
+  notes          String?
+  status         String   @default("COMPLETED") // COMPLETED, IN_PROGRESS, PENDING
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, ALERT, SUCCESS
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail String
+  action    String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, STOCK_ADJUST, APPROVAL, PERMISSION_CHANGE
+  module    String   // AUTH, CHILDREN, STAFF, HOSTEL, INVENTORY, MESS, MEDICAL, FINANCE, PURCHASES, ATTENDANCE, SETTINGS
+  recordId  String?
+  details   String?  // JSON or text description of changes
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  group       String   @default("GENERAL") // GENERAL, INSTITUTION, NOTIFICATIONS, SECURITY
+  description String?
+  updatedAt   DateTime @updatedAt
+}
