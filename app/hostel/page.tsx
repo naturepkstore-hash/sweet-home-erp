@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { HostelManagement } from '@/components/hostel/HostelManagement';
 
 export default async function HostelPage() {
-  await requireAuth();
+  await requireModuleAccess('hostel');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function HostelPage() {
     </AppLayout>
   );
 }
+

@@ -1,9 +1,25 @@
 import { prisma } from './prisma';
 
+export type AuditAction =
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'QUICK_SWITCH_LOGIN'
+  | 'CREATE_EMPLOYEE'
+  | 'UPDATE_EMPLOYEE'
+  | 'ARCHIVE_EMPLOYEE'
+  | 'DELETE_EMPLOYEE'
+  | 'ROLE_CHANGE'
+  | 'PERMISSION_CHANGE'
+  | 'SETTINGS_UPDATE'
+  | 'CREATE_RECORD'
+  | 'UPDATE_RECORD'
+  | 'DELETE_RECORD'
+  | 'SYSTEM_INIT';
+
 export interface AuditLogParams {
   userId?: string | null;
   userEmail: string;
-  action: string;
+  action: AuditAction | string;
   module: string;
   recordId?: string | null;
   details?: string | Record<string, unknown> | null;
@@ -40,3 +56,4 @@ export async function logAudit({
     console.error('Failed to write audit log:', error);
   }
 }
+

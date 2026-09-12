@@ -3,13 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { Role } from '@prisma/client';
 import { logAudit } from '@/lib/audit';
+import { isPersistedChildPhotoUrl } from '@/lib/child-photo';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const currentUser = await requireAuth();
     const { id } = await params;
 
     const child = await prisma.child.findUnique({
@@ -29,6 +30,22 @@ export async function GET(
 
     if (!child) {
       return NextResponse.json({ error: 'Child not found' }, { status: 404 });
+    }
+
+    if (
+      currentUser.role === Role.MOTHER_MAID &&
+      child.motherMaidId !== currentUser.employeeId
+    ) {
+      return NextResponse.json({ error: 'Unauthorized to access this child profile' }, { status: 403 });
+    }
+
+    if (
+      currentUser.role !== Role.INCHARGE &&
+      currentUser.role !== Role.ACCOUNT_ASSISTANT &&
+      currentUser.role !== Role.CLERK &&
+      currentUser.role !== Role.MOTHER_MAID
+    ) {
+      return NextResponse.json({ error: 'Unauthorized to access child profiles' }, { status: 403 });
     }
 
     return NextResponse.json({ success: true, child });
@@ -78,11 +95,16 @@ export async function PUT(
       chronicConditions,
       heightCm,
       weightKg,
+      photo,
     } = body;
 
     const existingChild = await prisma.child.findUnique({ where: { id } });
     if (!existingChild) {
       return NextResponse.json({ error: 'Child not found' }, { status: 404 });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(body, 'photo') && photo && !isPersistedChildPhotoUrl(photo)) {
+      return NextResponse.json({ error: 'Child photo URL is not a valid persisted image URL' }, { status: 400 });
     }
 
     // If bed changed, free old bed and occupy new bed
@@ -118,6 +140,9 @@ export async function PUT(
         clothingIssued: clothingIssued ?? existingChild.clothingIssued,
         dietaryNotes: dietaryNotes ?? existingChild.dietaryNotes,
         notes: notes ?? existingChild.notes,
+        ...(Object.prototype.hasOwnProperty.call(body, 'photo')
+          ? { photo: photo || null }
+          : {}),
       },
     });
 

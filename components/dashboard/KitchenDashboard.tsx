@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Utensils, Package, PlusCircle, CheckCircle2, Flame, ChefHat, ClipboardCheck } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { EmployeeDutyAssignments } from './EmployeeDutyAssignments';
 
 interface KitchenDashboardProps {
   user: {
@@ -111,6 +112,8 @@ export function KitchenDashboard({ user, todayMenu, rationItems }: KitchenDashbo
           </div>
         </div>
       </div>
+
+      <EmployeeDutyAssignments />
 
       {/* Today's 3-Meal Schedule Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

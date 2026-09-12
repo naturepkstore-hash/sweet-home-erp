@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeRoleName, setActiveRoleName] = useState<string | null>(null);
 
   const quickLogins = [
     { role: 'Incharge (Director)', email: 'incharge@sweethome.pbm.gov.pk', pass: 'PBM@Admin2026!', badge: 'Full Authority' },
@@ -18,7 +19,9 @@ export default function LoginPage() {
     { role: 'Records Clerk', email: 'clerk@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Children & Hostel' },
     { role: 'Mother Maid 1', email: 'mothermaid1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Assigned Children' },
     { role: 'Head Cook 1', email: 'cook1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Kitchen & Menu' },
+    { role: 'Cook Helper 1', email: 'cookhelper1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Kitchen Tasks' },
     { role: 'Waiter 1', email: 'waiter1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Meal Serving' },
+    { role: 'Sweeper 1', email: 'sweeper1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Sanitation' },
     { role: 'Security Guard 1', email: 'security1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Gate & Shift' },
   ];
 
@@ -50,22 +53,23 @@ export default function LoginPage() {
     }
   };
 
-  const handleFillCredentials = (email: string, pass: string) => {
+  const handleFillCredentials = (email: string, pass: string, roleName: string) => {
     setLoginId(email);
     setPassword(pass);
+    setActiveRoleName(roleName);
     setError(null);
   };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700/30 flex flex-col md:flex-row">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700/30 flex flex-col md:flex-row animate-scale-in">
         
         {/* Left Form Area */}
-        <div className="w-full md:w-1/2 p-8 sm:p-10 flex flex-col justify-between">
+        <div className="w-full md:w-1/2 p-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
           <div>
             {/* Header / Seal */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-emerald-700 flex items-center justify-center text-white shadow-lg shadow-emerald-700/30">
+              <div className="w-12 h-12 rounded-xl bg-emerald-700 flex items-center justify-center text-white shadow-lg shadow-emerald-700/30 transition-transform duration-200 hover:scale-105">
                 <Shield className="w-7 h-7" />
               </div>
               <div>
@@ -105,9 +109,12 @@ export default function LoginPage() {
                     type="text"
                     required
                     value={loginId}
-                    onChange={(e) => setLoginId(e.target.value)}
+                    onChange={(e) => {
+                      setLoginId(e.target.value);
+                      setActiveRoleName(null);
+                    }}
                     placeholder="e.g. incharge@sweethome.pbm.gov.pk"
-                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-hidden transition-all text-slate-900"
+                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-hidden input-focus-smooth text-slate-900"
                   />
                 </div>
               </div>
@@ -126,7 +133,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-hidden transition-all text-slate-900"
+                    className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-hidden input-focus-smooth text-slate-900"
                   />
                 </div>
               </div>
@@ -141,7 +148,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white text-xs font-bold rounded-lg shadow-md shadow-emerald-800/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white text-xs font-bold rounded-lg shadow-md shadow-emerald-800/30 flex items-center justify-center gap-2 btn-interactive cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -161,7 +168,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Info & Fast Role Selector */}
-        <div className="w-full md:w-1/2 bg-slate-900 p-8 sm:p-10 text-white flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-800">
+        <div className="w-full md:w-1/2 bg-slate-900 p-8 sm:p-10 text-white flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-800 animate-fade-in-up stagger-1">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800/60 w-fit mb-4">
               <KeyRound className="w-3.5 h-3.5" />
@@ -170,35 +177,42 @@ export default function LoginPage() {
 
             <h3 className="text-lg font-bold text-white mb-2">Select Staff Profile to Test:</h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Click any of the 23 staff roles below to automatically load their secure credentials and experience their tailored dashboard:
+              Click any of the 10 role demonstrators below to automatically load their secure credentials and experience their tailored dashboard:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-              {quickLogins.map((item) => (
-                <button
-                  key={item.email}
-                  type="button"
-                  onClick={() => handleFillCredentials(item.email, item.pass)}
-                  className="text-left p-2.5 rounded-lg bg-slate-800/70 hover:bg-emerald-900/40 border border-slate-700/60 hover:border-emerald-500/50 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-slate-200 group-hover:text-emerald-300">
-                      {item.role}
-                    </span>
-                    <span className="text-[9px] bg-slate-700 text-slate-300 group-hover:bg-emerald-800 group-hover:text-emerald-100 px-1.5 py-0.5 rounded font-medium">
-                      {item.badge}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 truncate mt-1">{item.email}</span>
-                </button>
-              ))}
+              {quickLogins.map((item) => {
+                const isSelected = activeRoleName === item.role;
+                return (
+                  <button
+                    key={item.email}
+                    type="button"
+                    onClick={() => handleFillCredentials(item.email, item.pass, item.role)}
+                    className={`text-left p-2.5 rounded-lg border transition-all duration-150 cursor-pointer group flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-emerald-900/60 border-emerald-400 ring-1 ring-emerald-400'
+                        : 'bg-slate-800/70 hover:bg-emerald-900/40 border-slate-700/60 hover:border-emerald-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`font-bold text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-200 group-hover:text-emerald-300'}`}>
+                        {item.role}
+                      </span>
+                      <span className="text-[9px] bg-slate-700 text-slate-300 group-hover:bg-emerald-800 group-hover:text-emerald-100 px-1.5 py-0.5 rounded font-medium">
+                        {item.badge}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 truncate mt-1">{item.email}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>All 23 staff roles active with discrete RBAC permissions</span>
+              <span>All 10 staff roles active with discrete RBAC permissions</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

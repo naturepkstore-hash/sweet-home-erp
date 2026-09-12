@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Baby,
   Search,
@@ -21,6 +22,8 @@ import {
 } from 'lucide-react';
 import { exportToExcelFile } from '@/lib/export';
 import { formatDate } from '@/lib/utils';
+import { ChildPhotoPicker } from './ChildPhotoPicker';
+import { childPhotoDisplaySrc } from '@/lib/child-photo';
 
 interface ChildItem {
   id: string;
@@ -40,6 +43,7 @@ interface ChildItem {
   clothingIssued: string | null;
   dietaryNotes: string | null;
   notes: string | null;
+  photo: string | null;
   room?: { id: string; roomNumber: string } | null;
   bed?: { id: string; bedNumber: string } | null;
   class?: { id: string; name: string } | null;
@@ -51,6 +55,15 @@ interface ChildItem {
     heightCm: number | null;
     weightKg: number | null;
   } | null;
+}
+
+function calculateAge(dateOfBirth: string) {
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) age -= 1;
+  return Math.max(0, age);
 }
 
 export function ChildrenManagement() {
@@ -96,9 +109,23 @@ export function ChildrenManagement() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editPhotoRemoved, setEditPhotoRemoved] = useState(false);
 
   // Edit Form State
   const [editFormData, setEditFormData] = useState<any>({});
+
+  const uploadChildPhoto = async (file: File, childId?: string) => {
+    const body = new FormData();
+    body.append('file', file);
+    if (childId) body.append('childId', childId);
+
+    const response = await fetch('/api/children/photo', { method: 'POST', body });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Photo upload failed');
+    return data.url as string;
+  };
 
   const fetchChildren = async () => {
     setLoading(true);
@@ -156,10 +183,11 @@ export function ChildrenManagement() {
     setIsSubmitting(true);
 
     try {
+      const photo = newPhotoFile ? await uploadChildPhoto(newPhotoFile) : null;
       const res = await fetch('/api/children', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, photo }),
       });
 
       const data = await res.json();
@@ -169,6 +197,7 @@ export function ChildrenManagement() {
       }
 
       setFormSuccess('Child enrolled into Sweet Home Multan successfully!');
+      setNewPhotoFile(null);
       setTimeout(() => {
         setShowAddModal(false);
         setFormSuccess(null);
@@ -203,27 +232,37 @@ export function ChildrenManagement() {
       heightCm: c.medicalRecord?.heightCm?.toString() || '',
       weightKg: c.medicalRecord?.weightKg?.toString() || '',
     });
+    setEditPhotoFile(null);
+    setEditPhotoRemoved(false);
     setShowEditModal(true);
   };
 
   const handleUpdateChild = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedChild) return;
+    setFormError(null);
     setIsSubmitting(true);
 
     try {
+      const photo = editPhotoFile
+        ? await uploadChildPhoto(editPhotoFile, selectedChild.id)
+        : editPhotoRemoved
+        ? null
+        : undefined;
       const res = await fetch(`/api/children/${selectedChild.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify({ ...editFormData, ...(photo !== undefined ? { photo } : {}) }),
       });
 
       if (res.ok) {
         setShowEditModal(false);
+        setEditPhotoFile(null);
+        setEditPhotoRemoved(false);
         fetchChildren();
       }
     } catch (err) {
-      console.error(err);
+      setFormError(err instanceof Error ? err.message : 'Failed to update child profile');
     } finally {
       setIsSubmitting(false);
     }
@@ -332,25 +371,27 @@ export function ChildrenManagement() {
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3">Child ID & Name</th>
+                <th className="px-4 py-3">Child Profile</th>
+                <th className="px-4 py-3">Age / Gender</th>
                 <th className="px-4 py-3">Father / Guardian</th>
                 <th className="px-4 py-3">B-Form / CNIC</th>
                 <th className="px-4 py-3">Hostel & Class</th>
                 <th className="px-4 py-3">Mother Maid</th>
                 <th className="px-4 py-3">Medical Summary</th>
+                <th className="px-4 py-3">Status / Admission</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                     Loading enrolled children records...
                   </td>
                 </tr>
               ) : children.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                     No children found matching the search criteria.
                   </td>
                 </tr>
@@ -359,8 +400,8 @@ export function ChildrenManagement() {
                   <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center shrink-0">
-                          {c.fullName.charAt(0)}
+                        <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+                          {childPhotoDisplaySrc(c.photo) ? <img src={childPhotoDisplaySrc(c.photo)!} alt={`${c.fullName} profile`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center font-bold">{c.fullName.charAt(0)}</div>}
                         </div>
                         <div>
                           <div className="font-bold text-slate-900">{c.fullName}</div>
@@ -368,6 +409,7 @@ export function ChildrenManagement() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-4 py-3"><div className="font-bold text-slate-800">{calculateAge(c.dateOfBirth)} years</div><div className="text-[10px] text-slate-500">{c.gender}</div></td>
                     <td className="px-4 py-3">
                       <div className="text-slate-800 font-medium">{c.fatherGuardianName}</div>
                       <div className="text-[10px] text-slate-400">{c.guardianContact || 'No contact'}</div>
@@ -392,8 +434,12 @@ export function ChildrenManagement() {
                         {c.medicalRecord?.allergies || 'Healthy'}
                       </div>
                     </td>
+                    <td className="px-4 py-3"><span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">{c.status}</span><div className="mt-1 text-[10px] text-slate-500">{formatDate(c.admissionDate)}</div></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <Link href={`/children/${c.id}`} className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50" title="View Child Profile">
+                          <Eye className="h-3.5 w-3.5" />
+                        </Link>
                         <button
                           onClick={() => {
                             setSelectedChild(c);
@@ -457,6 +503,12 @@ export function ChildrenManagement() {
             )}
 
             <form onSubmit={handleCreateChild} className="mt-4 space-y-4 text-xs">
+              <ChildPhotoPicker
+                onFileSelected={setNewPhotoFile}
+                onRemove={() => setNewPhotoFile(null)}
+                disabled={isSubmitting}
+              />
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Child Full Name *</label>
@@ -761,8 +813,7 @@ export function ChildrenManagement() {
 
                 {/* Photograph Box */}
                 <div className="w-32 h-36 border-2 border-dashed border-slate-400 rounded-lg flex flex-col items-center justify-center text-center p-2 bg-white shrink-0 self-center">
-                  <Baby className="w-10 h-10 text-slate-300 mb-1" />
-                  <span className="text-[10px] text-slate-400 font-medium">Official Child Photograph</span>
+                  {childPhotoDisplaySrc(selectedChild.photo) ? <img src={childPhotoDisplaySrc(selectedChild.photo)!} alt={`${selectedChild.fullName} profile`} className="h-full w-full rounded object-cover" /> : <><Baby className="w-10 h-10 text-slate-300 mb-1" /><span className="text-[10px] text-slate-400 font-medium">Official Child Photograph</span></>}
                 </div>
               </div>
 
@@ -839,6 +890,18 @@ export function ChildrenManagement() {
             </div>
 
             <form onSubmit={handleUpdateChild} className="mt-4 space-y-3 text-xs">
+              {formError && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">{formError}</div>}
+
+              <ChildPhotoPicker
+                currentPhoto={selectedChild.photo}
+                onFileSelected={(file) => {
+                  setEditPhotoFile(file);
+                  if (file) setEditPhotoRemoved(false);
+                }}
+                onRemove={() => setEditPhotoRemoved(true)}
+                disabled={isSubmitting}
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Full Name</label>

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -18,22 +18,72 @@ enum Role {
   COOK_HELPER
   SWEEPER
   SECURITY_GUARD
+  DRIVER
+  QARI_QARIA
+}
+
+model RoleDefinition {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g. "INCHARGE", "ACCOUNT_ASSISTANT"
+  displayName String           // e.g. "Incharge (Highest Authority)"
+  description String?
+  isSystem    Boolean          @default(true)
+  users       User[]
+  employees   Employee[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  code            String           @unique // e.g. "dashboard.view", "employees.create"
+  module          String           // e.g. "dashboard", "employees", "finance"
+  description     String?
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model RolePermission {
+  id           String         @id @default(cuid())
+  roleId       String
+  role         RoleDefinition @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission     @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+
+  @@unique([roleId, permissionId])
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  code        String     @unique // e.g. "ADM", "FIN", "HR", "CARE"
+  name        String     @unique
+  description String?
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model User {
-  id            String         @id @default(cuid())
-  username      String         @unique
-  email         String         @unique
+  id            String          @id @default(cuid())
+  username      String          @unique
+  email         String          @unique
   password      String
-  role          Role
-  status        String         @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
-  permissions   String         @default("[]") // JSON array of fine-grained permission codes
+  role          Role            @default(MOTHER_MAID)
+  roleId        String?
+  roleDef       RoleDefinition? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  status        String          @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  permissions   String          @default("[]") // JSON array of fine-grained permission codes
   lastLogin     DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  lastLoginAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   employee      Employee?
   auditLogs     AuditLog[]
   notifications Notification[]
+  assignedDutyRecords DutyAssignment[] @relation("DutyAssignedBy")
 }
 
 model Employee {
@@ -46,7 +96,12 @@ model Employee {
   address            String
   phoneNumber        String
   role               Role
-  department         String
+  roleId             String?
+  roleDef            RoleDefinition?      @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  department         String               @default("Operations")
+  departmentId       String?
+  departmentDef      Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  joiningDate        DateTime             @default(now())
   employmentStatus   String               @default("ACTIVE") // ACTIVE, ON_LEAVE, RESIGNED, TERMINATED
   emergencyContact   String
   photo              String?
@@ -55,7 +110,9 @@ model Employee {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   attendances        Attendance[]
+  employeeAttendances EmployeeAttendance[]
   duties             StaffDuty[]
+  dutyAssignments    DutyAssignment[]
   assignedChildren   Child[]              @relation("MotherMaidChildren")
   purchases          Purchase[]
   financeTxns        FinanceTransaction[]
@@ -368,6 +425,41 @@ model Attendance {
   @@unique([date, employeeId])
 }
 
+model OfficeLocation {
+  id                  String   @id @default(cuid())
+  officeName          String   @default("Sweet Home Multan Main Campus")
+  latitude            Float
+  longitude           Float
+  allowedRadiusMeters Float    @default(100.0) // 100 meters
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model EmployeeAttendance {
+  id                     String    @id @default(cuid())
+  employeeId             String
+  employee               Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date                   DateTime  // start-of-day date
+  checkInTime            DateTime?
+  checkOutTime           DateTime?
+  status                 String    @default("PRESENT") // PRESENT, LATE, HALF_DAY, ABSENT, ON_LEAVE
+  workingMinutes         Int       @default(0)
+  verificationMethod     String    @default("GEOFENCE_GPS") // GEOFENCE_GPS, MANUAL_ADMIN, BIOMETRIC
+  locationVerified       Boolean   @default(true)
+  checkInLatitude        Float?
+  checkInLongitude       Float?
+  checkInDistanceMeters  Float?
+  checkOutLatitude       Float?
+  checkOutLongitude      Float?
+  checkOutDistanceMeters Float?
+  remarks                String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@unique([employeeId, date])
+}
+
 model StaffDuty {
   id             String   @id @default(cuid())
   employeeId     String
@@ -378,6 +470,38 @@ model StaffDuty {
   notes          String?
   status         String   @default("COMPLETED") // COMPLETED, IN_PROGRESS, PENDING
   createdAt      DateTime @default(now())
+}
+
+model Duty {
+  id           String           @id @default(cuid())
+  nameEnglish  String           @unique
+  nameUrdu     String
+  description  String?
+  isActive     Boolean          @default(true)
+  assignments  DutyAssignment[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model DutyAssignment {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  dutyId       String
+  duty         Duty     @relation(fields: [dutyId], references: [id], onDelete: Restrict)
+  dutyDate     DateTime
+  shift        String   @default("MORNING")
+  status       String   @default("ASSIGNED") // ASSIGNED, PENDING, COMPLETED, OVERDUE, CANCELLED
+  assignedById String
+  assignedBy   User     @relation("DutyAssignedBy", fields: [assignedById], references: [id], onDelete: Restrict)
+  completedAt  DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([employeeId, dutyId, dutyDate, shift])
+  @@index([employeeId, dutyDate])
+  @@index([status, dutyDate])
 }
 
 model Notification {

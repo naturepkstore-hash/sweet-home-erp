@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Shield, UserPlus, CheckCircle2, Clock, PhoneCall, AlertOctagon } from 'lucide-react';
+import { EmployeeDutyAssignments } from './EmployeeDutyAssignments';
 
 interface SecurityDashboardProps {
   user: {
@@ -105,6 +106,8 @@ export function SecurityDashboard({ user }: SecurityDashboardProps) {
           </div>
         </div>
       </div>
+
+      <EmployeeDutyAssignments />
 
       {/* Grid: New Entry Form + Emergency Contacts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

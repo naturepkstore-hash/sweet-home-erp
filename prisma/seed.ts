@@ -6,12 +6,793 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting Sweet Home Multan ERP database seed...');
 
-  // 1. Hash default passwords
+  // 1. Hash default passwords with bcrypt
   const adminPassword = await bcrypt.hash('PBM@Admin2026!', 10);
   const accountsPassword = await bcrypt.hash('PBM@Accounts2026!', 10);
   const staffPassword = await bcrypt.hash('PBM@Staff2026!', 10);
 
-  // 2. Inventory Categories
+  // 2. Seed All 10 Role Definitions
+  const rolesData = [
+    {
+      name: 'INCHARGE',
+      displayName: 'Incharge (Highest Authority)',
+      description: 'Project Director / Head of Sweet Home Multan with complete institutional, administrative, and financial authority.',
+    },
+    {
+      name: 'ACCOUNT_ASSISTANT',
+      displayName: 'Account Assistant',
+      description: 'Full operational ERP access over Accounts, Procurement, Inventory, Ration, Children, and Staff records.',
+    },
+    {
+      name: 'HR_REPRESENTATIVE',
+      displayName: 'HR Representative',
+      description: 'Human Resources management, staff profiles, duty rosters, attendance tracking, and institutional correspondence.',
+    },
+    {
+      name: 'CLERK',
+      displayName: 'Records Clerk',
+      description: 'Admissions, orphan child profiles, document verification, academic records, and hostel bed allocations.',
+    },
+    {
+      name: 'MOTHER_MAID',
+      displayName: 'Mother Maid',
+      description: 'Dedicated maternal care, daily hygiene, meal supervision, and assigned room children monitoring.',
+    },
+    {
+      name: 'WAITER',
+      displayName: 'Waiter / Dining Staff',
+      description: 'Dining hall food distribution, meal serving records, tableware sanitation, and mealtime discipline.',
+    },
+    {
+      name: 'COOK',
+      displayName: 'Head Cook',
+      description: 'Kitchen management, meal preparation according to weekly approved menu, and ration consumption logging.',
+    },
+    {
+      name: 'COOK_HELPER',
+      displayName: 'Cook Helper',
+      description: 'Kitchen assistant for vegetable preparation, dough kneading, dishwashing, and ration fetching.',
+    },
+    {
+      name: 'SWEEPER',
+      displayName: 'Sanitation Staff',
+      description: 'Campus sanitation, hostel rooms cleanliness, hygiene maintenance, and waste management.',
+    },
+    {
+      name: 'SECURITY_GUARD',
+      displayName: 'Security Guard',
+      description: 'Main gate access control, visitor registry, shift security surveillance, and child safety.',
+    },
+    {
+      name: 'DRIVER',
+      displayName: 'Driver',
+      description: 'Approved institutional transport, school pick and drop, and official movement support.',
+    },
+    {
+      name: 'QARI_QARIA',
+      displayName: 'Qari / Qaria',
+      description: 'Religious education, Quran instruction, and supervised learning activities.',
+    },
+  ];
+
+  const roleMap: Record<string, string> = {};
+  for (const r of rolesData) {
+    const roleRecord = await prisma.roleDefinition.upsert({
+      where: { name: r.name },
+      update: { displayName: r.displayName, description: r.description },
+      create: r,
+    });
+    roleMap[r.name] = roleRecord.id;
+  }
+  console.log(`✅ Seeded ${rolesData.length} Role Definitions`);
+
+  const dutiesData = [
+    { nameEnglish: 'Room Cleaning', nameUrdu: 'کمرے کی صفائی', description: 'Clean and prepare assigned rooms and living areas.' },
+    { nameEnglish: 'Children Supervision', nameUrdu: 'بچوں کی نگرانی', description: 'Supervise children during assigned care periods.' },
+    { nameEnglish: 'Breakfast Duty', nameUrdu: 'ناشتے کی ڈیوٹی', description: 'Prepare, serve, and monitor breakfast service.' },
+    { nameEnglish: 'Lunch Duty', nameUrdu: 'دوپہر کے کھانے کی ڈیوٹی', description: 'Prepare, serve, and monitor lunch service.' },
+    { nameEnglish: 'Dinner Duty', nameUrdu: 'رات کے کھانے کی ڈیوٹی', description: 'Prepare, serve, and monitor dinner service.' },
+    { nameEnglish: 'Kitchen Cleaning', nameUrdu: 'کچن کی صفائی', description: 'Clean kitchen surfaces, utensils, and service areas.' },
+    { nameEnglish: 'Night Duty', nameUrdu: 'رات کی ڈیوٹی', description: 'Perform assigned overnight supervision and safety checks.' },
+    { nameEnglish: 'Laundry Duty', nameUrdu: 'کپڑوں کی صفائی', description: 'Collect, wash, dry, and organize assigned laundry.' },
+    { nameEnglish: 'Gate Security', nameUrdu: 'گیٹ سیکیورٹی', description: 'Monitor the gate, visitors, and campus access.' },
+    { nameEnglish: 'School Pick & Drop', nameUrdu: 'اسکول پک اینڈ ڈراپ', description: 'Support approved school transport movements.' },
+  ];
+
+  for (const duty of dutiesData) {
+    await prisma.duty.upsert({
+      where: { nameEnglish: duty.nameEnglish },
+      update: { nameUrdu: duty.nameUrdu, description: duty.description, isActive: true },
+      create: duty,
+    });
+  }
+  console.log(`✅ Seeded ${dutiesData.length} Duty Catalog records`);
+
+  // 3. Seed Granular Permissions
+  const permissionsData = [
+    // Dashboard
+    { code: 'dashboard.view', module: 'dashboard', description: 'View role-tailored institutional dashboard' },
+
+    // Employees / Staff
+    { code: 'employees.view', module: 'employees', description: 'View staff directory and basic profiles' },
+    { code: 'employees.create', module: 'employees', description: 'Register new staff members' },
+    { code: 'employees.update', module: 'employees', description: 'Update staff details and contact info' },
+    { code: 'employees.delete', module: 'employees', description: 'Archive or terminate staff members' },
+    { code: 'employees.manage_users', module: 'employees', description: 'Create and manage individual staff login accounts' },
+    { code: 'employees.manage_roles', module: 'employees', description: 'Assign roles to staff members' },
+
+    // Children
+    { code: 'children.view', module: 'children', description: 'View enrolled children profiles' },
+    { code: 'children.create', module: 'children', description: 'Enroll new children and upload documents' },
+    { code: 'children.update', module: 'children', description: 'Update child information and hostel allocations' },
+    { code: 'children.delete', module: 'children', description: 'Discharge or transfer child records' },
+
+    // Attendance
+    { code: 'attendance.view', module: 'attendance', description: 'View daily attendance records' },
+    { code: 'attendance.create', module: 'attendance', description: 'Mark daily staff and children attendance' },
+    { code: 'attendance.update', module: 'attendance', description: 'Modify and verify attendance records' },
+
+    // Inventory & Ration
+    { code: 'inventory.view', module: 'inventory', description: 'View inventory stocks and items' },
+    { code: 'inventory.create', module: 'inventory', description: 'Add new inventory items and categories' },
+    { code: 'inventory.update', module: 'inventory', description: 'Update inventory item thresholds' },
+    { code: 'inventory.stock_in', module: 'inventory', description: 'Record incoming stock from purchases' },
+    { code: 'inventory.stock_out', module: 'inventory', description: 'Issue stock for consumption' },
+
+    // Ration
+    { code: 'ration.view', module: 'ration', description: 'View ration balances and benchmarks' },
+    { code: 'ration.create', module: 'ration', description: 'Record ration allocations' },
+    { code: 'ration.update', module: 'ration', description: 'Adjust ration stock levels' },
+
+    // Kitchen & Mess
+    { code: 'kitchen.view', module: 'kitchen', description: 'View weekly menu and meal records' },
+    { code: 'kitchen.create', module: 'kitchen', description: 'Log meal preparations and submit requests' },
+    { code: 'kitchen.update', module: 'kitchen', description: 'Update menu and kitchen consumption' },
+
+    // Finance & Purchases
+    { code: 'finance.view', module: 'finance', description: 'View ledger, grants, and expense entries' },
+    { code: 'finance.create', module: 'finance', description: 'Record vouchers, expenses, and payments' },
+    { code: 'finance.update', module: 'finance', description: 'Approve and reconcile financial transactions' },
+
+    // Reports
+    { code: 'reports.view', module: 'reports', description: 'Access institutional reports center' },
+    { code: 'reports.export', module: 'reports', description: 'Export institutional reports to Excel/PDF' },
+
+    // Audit Logs
+    { code: 'audit_logs.view', module: 'audit', description: 'Review system audit trail and user activities' },
+
+    // Settings
+    { code: 'settings.view', module: 'settings', description: 'View institutional parameters and settings' },
+    { code: 'settings.manage', module: 'settings', description: 'Modify core system configuration' },
+  ];
+
+  const permMap: Record<string, string> = {};
+  for (const p of permissionsData) {
+    const permRecord = await prisma.permission.upsert({
+      where: { code: p.code },
+      update: { description: p.description, module: p.module },
+      create: p,
+    });
+    permMap[p.code] = permRecord.id;
+  }
+  console.log(`✅ Seeded ${permissionsData.length} Granular Permissions`);
+
+  // 4. Link Role Permissions (RolePermission)
+  const rolePermissionsMatrix: Record<string, string[]> = {
+    INCHARGE: Object.keys(permMap),
+    ACCOUNT_ASSISTANT: [
+      'dashboard.view',
+      'employees.view',
+      'employees.create',
+      'employees.update',
+      'employees.manage_users',
+      'children.view',
+      'children.create',
+      'children.update',
+      'attendance.view',
+      'attendance.create',
+      'attendance.update',
+      'inventory.view',
+      'inventory.create',
+      'inventory.update',
+      'inventory.stock_in',
+      'inventory.stock_out',
+      'ration.view',
+      'ration.create',
+      'ration.update',
+      'kitchen.view',
+      'kitchen.create',
+      'kitchen.update',
+      'finance.view',
+      'finance.create',
+      'finance.update',
+      'reports.view',
+      'reports.export',
+    ],
+    HR_REPRESENTATIVE: [
+      'dashboard.view',
+      'employees.view',
+      'employees.create',
+      'employees.update',
+      'attendance.view',
+      'attendance.create',
+      'attendance.update',
+      'reports.view',
+    ],
+    CLERK: [
+      'dashboard.view',
+      'children.view',
+      'children.create',
+      'children.update',
+      'attendance.view',
+      'attendance.create',
+      'reports.view',
+    ],
+    MOTHER_MAID: [
+      'dashboard.view',
+      'children.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+    WAITER: [
+      'dashboard.view',
+      'kitchen.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+    COOK: [
+      'dashboard.view',
+      'kitchen.view',
+      'kitchen.create',
+      'kitchen.update',
+      'inventory.view',
+      'ration.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+    COOK_HELPER: [
+      'dashboard.view',
+      'kitchen.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+    SWEEPER: [
+      'dashboard.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+    SECURITY_GUARD: [
+      'dashboard.view',
+      'attendance.view',
+      'attendance.create',
+    ],
+  };
+
+  for (const [roleName, permCodes] of Object.entries(rolePermissionsMatrix)) {
+    const roleId = roleMap[roleName];
+    if (!roleId) continue;
+
+    for (const code of permCodes) {
+      const permissionId = permMap[code];
+      if (permissionId) {
+        await prisma.rolePermission.upsert({
+          where: {
+            roleId_permissionId: {
+              roleId,
+              permissionId,
+            },
+          },
+          update: {},
+          create: {
+            roleId,
+            permissionId,
+          },
+        });
+      }
+    }
+  }
+  console.log('✅ Linked Role-Permission mappings');
+
+  // 5. Seed Institutional Departments
+  const departmentsData = [
+    { code: 'ADM', name: 'Administration & Head of Office', description: 'Executive leadership, institutional governance, and compliance.' },
+    { code: 'FIN', name: 'Finance, Accounts & Procurement', description: 'Accounting, disbursements, budgeting, and ration procurement.' },
+    { code: 'HR', name: 'Human Resources & Public Relations', description: 'Staffing, welfare, attendance tracking, and duty rosters.' },
+    { code: 'REC', name: 'Admissions, Records & Education', description: 'Child intake, B-Form verification, academic tracking, and archives.' },
+    { code: 'CARE', name: 'Child Care & Wardenship Wing', description: '24/7 maternal care, dorm supervision, hygiene, and well-being.' },
+    { code: 'MESS', name: 'Mess & Dining Hall Service', description: 'Dining hall operations, food distribution, and cleanliness.' },
+    { code: 'KITCHEN', name: 'Kitchen & Food Preparation', description: 'Daily hygienic meal preparation, weekly menu cooking, and consumption.' },
+    { code: 'SANITATION', name: 'Sanitation, Cleaning & Hygiene', description: 'Facility cleanliness, fumigation, laundry, and campus hygiene.' },
+    { code: 'SEC', name: 'Security & Campus Safety', description: 'Perimeter protection, visitor verification, and 24/7 campus vigilance.' },
+  ];
+
+  const deptMap: Record<string, string> = {};
+  for (const dept of departmentsData) {
+    const d = await prisma.department.upsert({
+      where: { code: dept.code },
+      update: { name: dept.name, description: dept.description },
+      create: dept,
+    });
+    deptMap[dept.code] = d.id;
+  }
+  console.log(`✅ Seeded ${departmentsData.length} Institutional Departments`);
+
+  // 6. ALL 23 OFFICIAL STAFF MEMBERS
+  // Total = 23. NO Warden. NO Qari Sahib or Driver as ERP accounts.
+  const staffList = [
+    // 1. Incharge (1)
+    {
+      username: 'incharge',
+      email: 'incharge@sweethome.pbm.gov.pk',
+      password: adminPassword,
+      role: Role.INCHARGE,
+      roleName: 'INCHARGE',
+      deptCode: 'ADM',
+      department: 'Administration & Head of Office',
+      fullName: 'Malik Muhammad Aslam',
+      fatherHusbandName: 'Malik Noor Muhammad',
+      cnic: '36302-1234567-1',
+      address: 'House # 45, Officers Colony, Multan',
+      phoneNumber: '0300-7301122',
+      emergencyContact: '0301-8602233 (Brother: Malik Farooq)',
+      notes: 'Institutional Incharge / Project Director with highest administrative & financial authority.',
+      permissions: JSON.stringify(['dashboard.view', 'employees.*', 'children.*', 'finance.*', 'inventory.*', 'audit_logs.view', 'settings.*']),
+    },
+    // 2. Account Assistant (1)
+    {
+      username: 'accounts',
+      email: 'accounts@sweethome.pbm.gov.pk',
+      password: accountsPassword,
+      role: Role.ACCOUNT_ASSISTANT,
+      roleName: 'ACCOUNT_ASSISTANT',
+      deptCode: 'FIN',
+      department: 'Finance, Accounts & Procurement',
+      fullName: 'Muhammad Tariq Javed',
+      fatherHusbandName: 'Muhammad Siddique',
+      cnic: '36302-2345678-3',
+      address: 'Street # 8, Shah Rukn-e-Alam Colony, Multan',
+      phoneNumber: '0302-9451122',
+      emergencyContact: '0300-6819922 (Wife: Shazia Tariq)',
+      notes: 'Complete ERP operational access over Finance, Inventory, Ration, Purchases, Mess, and Children records.',
+      permissions: JSON.stringify(['dashboard.view', 'finance.*', 'inventory.*', 'purchases.*', 'ration.*', 'reports.*']),
+    },
+    // 3. HR / Representative (1)
+    {
+      username: 'hr',
+      email: 'hr@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.HR_REPRESENTATIVE,
+      roleName: 'HR_REPRESENTATIVE',
+      deptCode: 'HR',
+      department: 'Human Resources & Public Relations',
+      fullName: 'Syed Ali Raza Rizvi',
+      fatherHusbandName: 'Syed Ghulam Hussain',
+      cnic: '36302-3456789-5',
+      address: 'Mohalla Sadat, Old Shujabad Road, Multan',
+      phoneNumber: '0303-4567890',
+      emergencyContact: '0301-7788990 (Father: Syed Ghulam Hussain)',
+      notes: 'Manages staff profiles, duty assignments, attendance tracking, leave management, and institutional correspondence.',
+      permissions: JSON.stringify(['dashboard.view', 'employees.view', 'employees.create', 'employees.update', 'attendance.*', 'reports.view']),
+    },
+    // 4. Clerk (1)
+    {
+      username: 'clerk',
+      email: 'clerk@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.CLERK,
+      roleName: 'CLERK',
+      deptCode: 'REC',
+      department: 'Admissions, Records & Education',
+      fullName: 'Abdul Rehman Qureshi',
+      fatherHusbandName: 'Bashir Ahmed Qureshi',
+      cnic: '36302-4567890-7',
+      address: 'Chungi No. 9, LMQ Road, Multan',
+      phoneNumber: '0304-5678901',
+      emergencyContact: '0302-1122334 (Cousin: Usman Qureshi)',
+      notes: 'Handles children enrollment, B-Form verification, document archives, class allocations, and hostel records.',
+      permissions: JSON.stringify(['dashboard.view', 'children.*', 'attendance.*', 'reports.view']),
+    },
+    // 5-13. Mother Maids (9)
+    {
+      username: 'mothermaid1',
+      email: 'mothermaid1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Kaneez Fatima',
+      fatherHusbandName: 'Muhammad Iqbal (Late)',
+      cnic: '36302-5000001-2',
+      address: 'Sweet Home Staff Quarters, Block A, Multan',
+      phoneNumber: '0305-1110001',
+      emergencyContact: '0300-1234001 (Son: Hamza Iqbal)',
+      notes: 'Senior Mother Maid. Assigned to Room 101 children. Care, hygiene, meals supervision.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid2',
+      email: 'mothermaid2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Rashida Bibi',
+      fatherHusbandName: 'Ghulam Rasool',
+      cnic: '36302-5000002-4',
+      address: 'Sweet Home Staff Quarters, Block A, Multan',
+      phoneNumber: '0305-1110002',
+      emergencyContact: '0300-1234002 (Brother: Allah Ditta)',
+      notes: 'Mother Maid. Assigned to Room 102 children.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid3',
+      email: 'mothermaid3@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Nasreen Akhtar',
+      fatherHusbandName: 'Muhammad Akram',
+      cnic: '36302-5000003-6',
+      address: 'Sweet Home Staff Quarters, Block A, Multan',
+      phoneNumber: '0305-1110003',
+      emergencyContact: '0300-1234003 (Daughter: Maryam Akram)',
+      notes: 'Mother Maid. Assigned to Room 103 children.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid4',
+      email: 'mothermaid4@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Parveen Kousar',
+      fatherHusbandName: 'Muhammad Rafique (Late)',
+      cnic: '36302-5000004-8',
+      address: 'Sweet Home Staff Quarters, Block A, Multan',
+      phoneNumber: '0305-1110004',
+      emergencyContact: '0300-1234004 (Son: Bilal Rafique)',
+      notes: 'Mother Maid. Assigned to Room 104 children.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid5',
+      email: 'mothermaid5@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Shagufta Yasmeen',
+      fatherHusbandName: 'Muhammad Sharif',
+      cnic: '36302-5000005-0',
+      address: 'Sweet Home Staff Quarters, Block B, Multan',
+      phoneNumber: '0305-1110005',
+      emergencyContact: '0300-1234005 (Brother: Tariq Sharif)',
+      notes: 'Mother Maid. Assigned to Junior Wing Room 201.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid6',
+      email: 'mothermaid6@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Zubaida Begum',
+      fatherHusbandName: 'Ghulam Qadir (Late)',
+      cnic: '36302-5000006-2',
+      address: 'Sweet Home Staff Quarters, Block B, Multan',
+      phoneNumber: '0305-1110006',
+      emergencyContact: '0300-1234006 (Son: Faisal Qadir)',
+      notes: 'Mother Maid. Assigned to Junior Wing Room 202.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid7',
+      email: 'mothermaid7@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Farzana Kausar',
+      fatherHusbandName: 'Muhammad Anwar',
+      cnic: '36302-5000007-4',
+      address: 'Sweet Home Staff Quarters, Block B, Multan',
+      phoneNumber: '0305-1110007',
+      emergencyContact: '0300-1234007 (Brother: Sajid Anwar)',
+      notes: 'Mother Maid. Assigned to Junior Wing Room 203.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid8',
+      email: 'mothermaid8@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Bushra Batool',
+      fatherHusbandName: 'Syed Zulfiqar Ali',
+      cnic: '36302-5000008-6',
+      address: 'Sweet Home Staff Quarters, Block B, Multan',
+      phoneNumber: '0305-1110008',
+      emergencyContact: '0300-1234008 (Father: Syed Mehdi Shah)',
+      notes: 'Mother Maid. Assigned to Junior Wing Room 204.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    {
+      username: 'mothermaid9',
+      email: 'mothermaid9@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.MOTHER_MAID,
+      roleName: 'MOTHER_MAID',
+      deptCode: 'CARE',
+      department: 'Child Care & Wardenship Wing',
+      fullName: 'Abida Parveen',
+      fatherHusbandName: 'Muhammad Asif',
+      cnic: '36302-5000009-8',
+      address: 'Sweet Home Staff Quarters, Multan',
+      phoneNumber: '0305-1110009',
+      emergencyContact: '0300-1234009 (Husband: Muhammad Asif)',
+      notes: 'Mother Maid. Relief & Special Care Supervisor.',
+      permissions: JSON.stringify(['dashboard.view', 'children.view', 'attendance.create']),
+    },
+    // 14-15. Waiters (2)
+    {
+      username: 'waiter1',
+      email: 'waiter1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.WAITER,
+      roleName: 'WAITER',
+      deptCode: 'MESS',
+      department: 'Mess & Dining Hall Service',
+      fullName: 'Muhammad Ramzan',
+      fatherHusbandName: 'Allah Bakhsh',
+      cnic: '36302-6000001-1',
+      address: 'Basti Malook, Lodhran Road, Multan',
+      phoneNumber: '0306-2220001',
+      emergencyContact: '0300-9876001 (Brother: Allah Ditta)',
+      notes: 'Dining hall head waiter. Responsible for breakfast, lunch, and dinner food service to children.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'attendance.create']),
+    },
+    {
+      username: 'waiter2',
+      email: 'waiter2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.WAITER,
+      roleName: 'WAITER',
+      deptCode: 'MESS',
+      department: 'Mess & Dining Hall Service',
+      fullName: 'Sajjad Hussain',
+      fatherHusbandName: 'Ghulam Rasool',
+      cnic: '36302-6000002-3',
+      address: 'Suraj Kund Road, Multan',
+      phoneNumber: '0306-2220002',
+      emergencyContact: '0300-9876002 (Cousin: Zahid Hussain)',
+      notes: 'Assistant waiter. Dining hall hygiene, tableware cleanliness, meal distribution.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'attendance.create']),
+    },
+    // 16-17. Cooks (2)
+    {
+      username: 'cook1',
+      email: 'cook1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.COOK,
+      roleName: 'COOK',
+      deptCode: 'KITCHEN',
+      department: 'Kitchen & Food Preparation',
+      fullName: 'Ustad Abdul Majeed',
+      fatherHusbandName: 'Abdul Ghafoor',
+      cnic: '36302-7000001-5',
+      address: 'Lohari Gate, Old City Multan',
+      phoneNumber: '0307-3330001',
+      emergencyContact: '0300-6543001 (Son: Muhammad Naveed)',
+      notes: 'Head Cook. Prepares daily breakfast, lunch, and dinner according to approved weekly menu.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'kitchen.create', 'kitchen.update', 'inventory.view']),
+    },
+    {
+      username: 'cook2',
+      email: 'cook2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.COOK,
+      roleName: 'COOK',
+      deptCode: 'KITCHEN',
+      department: 'Kitchen & Food Preparation',
+      fullName: 'Muhammad Shafique',
+      fatherHusbandName: 'Muhammad Sadiq',
+      cnic: '36302-7000002-7',
+      address: 'Gulgasht Colony, Multan',
+      phoneNumber: '0307-3330002',
+      emergencyContact: '0300-6543002 (Brother: Muhammad Rafique)',
+      notes: 'Second Cook. Evening meals, special Friday menus, and bakery items.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'kitchen.create', 'kitchen.update', 'inventory.view']),
+    },
+    // 18-19. Cook Helpers (2)
+    {
+      username: 'cookhelper1',
+      email: 'cookhelper1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.COOK_HELPER,
+      roleName: 'COOK_HELPER',
+      deptCode: 'KITCHEN',
+      department: 'Kitchen & Food Preparation',
+      fullName: 'Muhammad Imran',
+      fatherHusbandName: 'Muhammad Boota',
+      cnic: '36302-8000001-9',
+      address: 'Sameejabad, Multan',
+      phoneNumber: '0308-4440001',
+      emergencyContact: '0300-3210001 (Father: Muhammad Boota)',
+      notes: 'Kitchen Helper. Vegetable chopping, kneading flour, cleaning utensils, ration fetching.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'attendance.create']),
+    },
+    {
+      username: 'cookhelper2',
+      email: 'cookhelper2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.COOK_HELPER,
+      roleName: 'COOK_HELPER',
+      deptCode: 'KITCHEN',
+      department: 'Kitchen & Food Preparation',
+      fullName: 'Zahid Mahmood',
+      fatherHusbandName: 'Ghulam Haider',
+      cnic: '36302-8000002-1',
+      address: 'Mumtazabad, Multan',
+      phoneNumber: '0308-4440002',
+      emergencyContact: '0300-3210002 (Brother: Khalid Mahmood)',
+      notes: 'Kitchen Helper. Dishwashing, stock stacking, and kitchen sanitation.',
+      permissions: JSON.stringify(['dashboard.view', 'kitchen.view', 'attendance.create']),
+    },
+    // 20-21. Sweepers (2)
+    {
+      username: 'sweeper1',
+      email: 'sweeper1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.SWEEPER,
+      roleName: 'SWEEPER',
+      deptCode: 'SANITATION',
+      department: 'Sanitation, Cleaning & Hygiene',
+      fullName: 'Babu Masih',
+      fatherHusbandName: 'Sadiq Masih',
+      cnic: '36302-9000001-3',
+      address: 'Christian Colony, Multan Cantt',
+      phoneNumber: '0309-5550001',
+      emergencyContact: '0300-8520001 (Son: Robin Masih)',
+      notes: 'Senior Sanitation Staff. Responsible for hostel corridors, bathrooms, and compound grounds.',
+      permissions: JSON.stringify(['dashboard.view', 'attendance.create']),
+    },
+    {
+      username: 'sweeper2',
+      email: 'sweeper2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.SWEEPER,
+      roleName: 'SWEEPER',
+      deptCode: 'SANITATION',
+      department: 'Sanitation, Cleaning & Hygiene',
+      fullName: 'Ashraf Masih',
+      fatherHusbandName: 'Boota Masih',
+      cnic: '36302-9000002-5',
+      address: 'Christian Colony, Multan Cantt',
+      phoneNumber: '0309-5550002',
+      emergencyContact: '0300-8520002 (Brother: Yousaf Masih)',
+      notes: 'Sanitation Staff. Assigned to dining hall, kitchen area, and junior wing sanitation.',
+      permissions: JSON.stringify(['dashboard.view', 'attendance.create']),
+    },
+    // 22-23. Security Guards (2)
+    {
+      username: 'security1',
+      email: 'security1@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.SECURITY_GUARD,
+      roleName: 'SECURITY_GUARD',
+      deptCode: 'SEC',
+      department: 'Security & Campus Safety',
+      fullName: 'Subedar (R) Muhammad Hanif',
+      fatherHusbandName: 'Fateh Muhammad',
+      cnic: '36302-0100001-7',
+      address: 'Qasim Bela, Multan Cantt',
+      phoneNumber: '0310-6660001',
+      emergencyContact: '0300-7410001 (Son: Major Faisal Hanif)',
+      notes: 'Day Shift Head Security Officer. Main gate register, visitor logging, campus perimeter patrol.',
+      permissions: JSON.stringify(['dashboard.view', 'attendance.create']),
+    },
+    {
+      username: 'security2',
+      email: 'security2@sweethome.pbm.gov.pk',
+      password: staffPassword,
+      role: Role.SECURITY_GUARD,
+      roleName: 'SECURITY_GUARD',
+      deptCode: 'SEC',
+      department: 'Security & Campus Safety',
+      fullName: 'Havildar (R) Muhammad Akhtar',
+      fatherHusbandName: 'Ghulam Qadir',
+      cnic: '36302-0100002-9',
+      address: 'Sher Shah Road, Multan',
+      phoneNumber: '0310-6660002',
+      emergencyContact: '0300-7410002 (Son: Yasir Akhtar)',
+      notes: 'Night Shift Security Officer. CCTV monitoring, night gate entry verification, safety checks.',
+      permissions: JSON.stringify(['dashboard.view', 'attendance.create']),
+    },
+  ];
+
+  const motherMaidEmployeeIds: string[] = [];
+  const createdEmployees: { id: string; role: Role; name: string }[] = [];
+
+  for (const s of staffList) {
+    const roleId = roleMap[s.roleName];
+    const deptId = deptMap[s.deptCode];
+
+    const user = await prisma.user.upsert({
+      where: { email: s.email },
+      update: {
+        username: s.username,
+        password: s.password,
+        role: s.role,
+        roleId: roleId || undefined,
+        permissions: s.permissions,
+        status: 'ACTIVE',
+      },
+      create: {
+        username: s.username,
+        email: s.email,
+        password: s.password,
+        role: s.role,
+        roleId: roleId || undefined,
+        status: 'ACTIVE',
+        permissions: s.permissions,
+      },
+    });
+
+    const emp = await prisma.employee.upsert({
+      where: { cnic: s.cnic },
+      update: {
+        userId: user.id,
+        fullName: s.fullName,
+        fatherHusbandName: s.fatherHusbandName,
+        address: s.address,
+        phoneNumber: s.phoneNumber,
+        role: s.role,
+        roleId: roleId || undefined,
+        department: s.department,
+        departmentId: deptId || undefined,
+        emergencyContact: s.emergencyContact,
+        notes: s.notes,
+        permissions: s.permissions,
+      },
+      create: {
+        userId: user.id,
+        fullName: s.fullName,
+        fatherHusbandName: s.fatherHusbandName,
+        cnic: s.cnic,
+        address: s.address,
+        phoneNumber: s.phoneNumber,
+        role: s.role,
+        roleId: roleId || undefined,
+        department: s.department,
+        departmentId: deptId || undefined,
+        emergencyContact: s.emergencyContact,
+        notes: s.notes,
+        permissions: s.permissions,
+      },
+    });
+
+    createdEmployees.push({ id: emp.id, role: s.role, name: s.fullName });
+    if (s.role === Role.MOTHER_MAID) {
+      motherMaidEmployeeIds.push(emp.id);
+    }
+  }
+
+  console.log(`✅ Seeded ${staffList.length} staff records (All 23 sanctioned positions with individual accounts)`);
+
+  // 7. Inventory Categories
   const categoriesData = [
     { name: 'Food / Ration', code: 'FOOD_RATION', description: 'Grains, pulses, cooking oils, sugar, spices, and non-perishables' },
     { name: 'Kitchen & Mess Supplies', code: 'KITCHEN_ITEMS', description: 'Cooking utensils, cutlery, gas cylinders, serving trays' },
@@ -32,7 +813,7 @@ async function main() {
     categoryMap[cat.code] = created.id;
   }
 
-  // 3. Expense Categories
+  // 8. Expense Categories
   const expenseCategories = [
     { name: 'Food & Ration Expenses', description: 'Monthly ration purchases, fresh vegetables, meat, milk, and eggs' },
     { name: 'Utilities (Electricity, Gas, Water)', description: 'MEPCO electric bills, Sui Gas, water filtration' },
@@ -54,7 +835,7 @@ async function main() {
     expCatMap[exp.name] = created.id;
   }
 
-  // 4. Hostel Infrastructure: Buildings, Rooms, Beds
+  // 9. Hostel Infrastructure: Buildings, Rooms, Beds
   const buildingsData = [
     {
       name: 'Allama Iqbal Block (Boys Wing)',
@@ -89,29 +870,40 @@ async function main() {
     });
 
     for (const r of bldg.rooms) {
-      const room = await prisma.room.create({
-        data: {
-          buildingId: b.id,
-          roomNumber: r.roomNumber,
-          floor: r.floor,
-          capacity: r.capacity,
-        },
+      let room = await prisma.room.findFirst({
+        where: { buildingId: b.id, roomNumber: r.roomNumber },
       });
-
-      for (let i = 1; i <= r.capacity; i++) {
-        const bed = await prisma.bed.create({
+      if (!room) {
+        room = await prisma.room.create({
           data: {
-            roomId: room.id,
-            bedNumber: `BED-${r.roomNumber.replace('Room ', '')}-${i.toString().padStart(2, '0')}`,
-            status: 'AVAILABLE',
+            buildingId: b.id,
+            roomNumber: r.roomNumber,
+            floor: r.floor,
+            capacity: r.capacity,
           },
         });
+      }
+
+      for (let i = 1; i <= r.capacity; i++) {
+        const bedNumber = `BED-${r.roomNumber.replace('Room ', '')}-${i.toString().padStart(2, '0')}`;
+        let bed = await prisma.bed.findFirst({
+          where: { roomId: room.id, bedNumber },
+        });
+        if (!bed) {
+          bed = await prisma.bed.create({
+            data: {
+              roomId: room.id,
+              bedNumber,
+              status: 'AVAILABLE',
+            },
+          });
+        }
         bedList.push(bed.id);
       }
     }
   }
 
-  // 5. Classes & Academic Structure
+  // 10. Classes & Academic Structure
   const classesData = [
     { name: 'Nursery', section: 'A', schoolName: 'Sweet Home Model School Multan' },
     { name: 'Prep', section: 'A', schoolName: 'Sweet Home Model School Multan' },
@@ -129,436 +921,23 @@ async function main() {
 
   const classList: string[] = [];
   for (const c of classesData) {
-    const createdClass = await prisma.class.create({
-      data: {
-        name: c.name,
-        section: c.section,
-        schoolName: c.schoolName,
-        academicYear: '2025-2026',
-      },
+    let createdClass = await prisma.class.findFirst({
+      where: { name: c.name, section: c.section },
     });
+    if (!createdClass) {
+      createdClass = await prisma.class.create({
+        data: {
+          name: c.name,
+          section: c.section,
+          schoolName: c.schoolName,
+          academicYear: '2025-2026',
+        },
+      });
+    }
     classList.push(createdClass.id);
   }
 
-  // 6. ALL 23 OFFICIAL STAFF MEMBERS (Exact structure: 1 Incharge, 1 Accounts, 1 HR, 1 Clerk, 9 Mother Maids, 2 Waiters, 2 Cooks, 2 Cook Helpers, 2 Sweepers, 2 Security Guards)
-  // Total = 23. NO Warden. NO Joining Date.
-  const staffList = [
-    // 1. Incharge (1)
-    {
-      username: 'incharge',
-      email: 'incharge@sweethome.pbm.gov.pk',
-      password: adminPassword,
-      role: Role.INCHARGE,
-      fullName: 'Malik Muhammad Aslam',
-      fatherHusbandName: 'Malik Noor Muhammad',
-      cnic: '36302-1234567-1',
-      address: 'House # 45, Officers Colony, Multan',
-      phoneNumber: '0300-7301122',
-      department: 'Administration & Head of Office',
-      emergencyContact: '0301-8602233 (Brother: Malik Farooq)',
-      notes: 'Institutional Incharge / Project Director with highest administrative & financial authority.',
-      permissions: JSON.stringify(['ALL_MODULES', 'ADMIN_ACCESS', 'AUDIT_VIEW', 'FINANCIAL_APPROVAL']),
-    },
-    // 2. Account Assistant (1)
-    {
-      username: 'accounts',
-      email: 'accounts@sweethome.pbm.gov.pk',
-      password: accountsPassword,
-      role: Role.ACCOUNT_ASSISTANT,
-      fullName: 'Muhammad Tariq Javed',
-      fatherHusbandName: 'Muhammad Siddique',
-      cnic: '36302-2345678-3',
-      address: 'Street # 8, Shah Rukn-e-Alam Colony, Multan',
-      phoneNumber: '0302-9451122',
-      department: 'Finance, Accounts & Procurement',
-      emergencyContact: '0300-6819922 (Wife: Shazia Tariq)',
-      notes: 'Complete ERP operational access over Finance, Inventory, Ration, Purchases, Mess, and Children records.',
-      permissions: JSON.stringify(['FINANCE_ALL', 'INVENTORY_ALL', 'PURCHASES_ALL', 'REPORTS_ALL', 'CHILDREN_VIEW', 'MESS_ALL']),
-    },
-    // 3. HR / Representative (1)
-    {
-      username: 'hr',
-      email: 'hr@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.HR_REPRESENTATIVE,
-      fullName: 'Syed Ali Raza Rizvi',
-      fatherHusbandName: 'Syed Ghulam Hussain',
-      cnic: '36302-3456789-5',
-      address: 'Mohalla Sadat, Old Shujabad Road, Multan',
-      phoneNumber: '0303-4567890',
-      department: 'Human Resources & Public Relations',
-      emergencyContact: '0301-7788990 (Father: Syed Ghulam Hussain)',
-      notes: 'Manages staff profiles, duty assignments, attendance tracking, leave management, and institutional correspondence.',
-      permissions: JSON.stringify(['STAFF_ALL', 'ATTENDANCE_STAFF', 'DUTIES_ALL', 'HR_REPORTS']),
-    },
-    // 4. Clerk (1)
-    {
-      username: 'clerk',
-      email: 'clerk@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.CLERK,
-      fullName: 'Abdul Rehman Qureshi',
-      fatherHusbandName: 'Bashir Ahmed Qureshi',
-      cnic: '36302-4567890-7',
-      address: 'Chungi No. 9, LMQ Road, Multan',
-      phoneNumber: '0304-5678901',
-      department: 'Admissions, Records & Education',
-      emergencyContact: '0302-1122334 (Cousin: Usman Qureshi)',
-      notes: 'Handles children enrollment, B-Form verification, document archives, class allocations, and hostel records.',
-      permissions: JSON.stringify(['CHILDREN_ALL', 'EDUCATION_ALL', 'HOSTEL_VIEW', 'ATTENDANCE_CHILDREN', 'DOCUMENTS_ALL']),
-    },
-    // 5-13. Mother Maids (9)
-    {
-      username: 'mothermaid1',
-      email: 'mothermaid1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Kaneez Fatima',
-      fatherHusbandName: 'Muhammad Iqbal (Late)',
-      cnic: '36302-5000001-2',
-      address: 'Sweet Home Staff Quarters, Block A, Multan',
-      phoneNumber: '0305-1110001',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234001 (Son: Hamza Iqbal)',
-      notes: 'Senior Mother Maid. Assigned to Room 101 children. Care, hygiene, meals supervision.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid2',
-      email: 'mothermaid2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Rashida Bibi',
-      fatherHusbandName: 'Ghulam Rasool',
-      cnic: '36302-5000002-4',
-      address: 'Sweet Home Staff Quarters, Block A, Multan',
-      phoneNumber: '0305-1110002',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234002 (Brother: Allah Ditta)',
-      notes: 'Mother Maid. Assigned to Room 102 children.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid3',
-      email: 'mothermaid3@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Nasreen Akhtar',
-      fatherHusbandName: 'Muhammad Akram',
-      cnic: '36302-5000003-6',
-      address: 'Sweet Home Staff Quarters, Block A, Multan',
-      phoneNumber: '0305-1110003',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234003 (Daughter: Maryam Akram)',
-      notes: 'Mother Maid. Assigned to Room 103 children.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid4',
-      email: 'mothermaid4@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Parveen Kousar',
-      fatherHusbandName: 'Muhammad Rafique (Late)',
-      cnic: '36302-5000004-8',
-      address: 'Sweet Home Staff Quarters, Block A, Multan',
-      phoneNumber: '0305-1110004',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234004 (Son: Bilal Rafique)',
-      notes: 'Mother Maid. Assigned to Room 104 children.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid5',
-      email: 'mothermaid5@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Shagufta Yasmeen',
-      fatherHusbandName: 'Muhammad Sharif',
-      cnic: '36302-5000005-0',
-      address: 'Sweet Home Staff Quarters, Block B, Multan',
-      phoneNumber: '0305-1110005',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234005 (Brother: Tariq Sharif)',
-      notes: 'Mother Maid. Assigned to Junior Wing Room 201.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid6',
-      email: 'mothermaid6@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Zubaida Begum',
-      fatherHusbandName: 'Ghulam Qadir (Late)',
-      cnic: '36302-5000006-2',
-      address: 'Sweet Home Staff Quarters, Block B, Multan',
-      phoneNumber: '0305-1110006',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234006 (Son: Faisal Qadir)',
-      notes: 'Mother Maid. Assigned to Junior Wing Room 202.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid7',
-      email: 'mothermaid7@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Farzana Kausar',
-      fatherHusbandName: 'Muhammad Anwar',
-      cnic: '36302-5000007-4',
-      address: 'Sweet Home Staff Quarters, Block B, Multan',
-      phoneNumber: '0305-1110007',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234007 (Brother: Sajid Anwar)',
-      notes: 'Mother Maid. Assigned to Junior Wing Room 203.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid8',
-      email: 'mothermaid8@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Bushra Batool',
-      fatherHusbandName: 'Syed Zulfiqar Ali',
-      cnic: '36302-5000008-6',
-      address: 'Sweet Home Staff Quarters, Block B, Multan',
-      phoneNumber: '0305-1110008',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234008 (Father: Syed Mehdi Shah)',
-      notes: 'Mother Maid. Assigned to Junior Wing Room 204.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    {
-      username: 'mothermaid9',
-      email: 'mothermaid9@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.MOTHER_MAID,
-      fullName: 'Abida Parveen',
-      fatherHusbandName: 'Muhammad Asif',
-      cnic: '36302-5000009-8',
-      address: 'Sweet Home Staff Quarters, Multan',
-      phoneNumber: '0305-1110009',
-      department: 'Child Care & Wardenship Wing',
-      emergencyContact: '0300-1234009 (Husband: Muhammad Asif)',
-      notes: 'Mother Maid. Relief & Special Care Supervisor.',
-      permissions: JSON.stringify(['MY_CHILDREN', 'CARE_DUTY_LOG', 'CHILD_HEALTH_NOTES']),
-    },
-    // 14-15. Waiters (2)
-    {
-      username: 'waiter1',
-      email: 'waiter1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.WAITER,
-      fullName: 'Muhammad Ramzan',
-      fatherHusbandName: 'Allah Bakhsh',
-      cnic: '36302-6000001-1',
-      address: 'Basti Malook, Lodhran Road, Multan',
-      phoneNumber: '0306-2220001',
-      department: 'Mess & Dining Hall Service',
-      emergencyContact: '0300-9876001 (Brother: Allah Ditta)',
-      notes: 'Dining hall head waiter. Responsible for breakfast, lunch, and dinner food service to children.',
-      permissions: JSON.stringify(['MESS_SERVING', 'DINING_DUTY_LOG']),
-    },
-    {
-      username: 'waiter2',
-      email: 'waiter2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.WAITER,
-      fullName: 'Sajjad Hussain',
-      fatherHusbandName: 'Ghulam Rasool',
-      cnic: '36302-6000002-3',
-      address: 'Suraj Kund Road, Multan',
-      phoneNumber: '0306-2220002',
-      department: 'Mess & Dining Hall Service',
-      emergencyContact: '0300-9876002 (Cousin: Zahid Hussain)',
-      notes: 'Assistant waiter. Dining hall hygiene, tableware cleanliness, meal distribution.',
-      permissions: JSON.stringify(['MESS_SERVING', 'DINING_DUTY_LOG']),
-    },
-    // 16-17. Cooks (2)
-    {
-      username: 'cook1',
-      email: 'cook1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.COOK,
-      fullName: 'Ustad Abdul Majeed',
-      fatherHusbandName: 'Abdul Ghafoor',
-      cnic: '36302-7000001-5',
-      address: 'Lohari Gate, Old City Multan',
-      phoneNumber: '0307-3330001',
-      department: 'Kitchen & Food Preparation',
-      emergencyContact: '0300-6543001 (Son: Muhammad Naveed)',
-      notes: 'Head Cook. Prepares daily breakfast, lunch, and dinner according to approved weekly menu.',
-      permissions: JSON.stringify(['KITCHEN_MENU', 'KITCHEN_CONSUMPTION', 'KITCHEN_REQUESTS']),
-    },
-    {
-      username: 'cook2',
-      email: 'cook2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.COOK,
-      fullName: 'Muhammad Shafique',
-      fatherHusbandName: 'Muhammad Sadiq',
-      cnic: '36302-7000002-7',
-      address: 'Gulgasht Colony, Multan',
-      phoneNumber: '0307-3330002',
-      department: 'Kitchen & Food Preparation',
-      emergencyContact: '0300-6543002 (Brother: Muhammad Rafique)',
-      notes: 'Second Cook. Evening meals, special Friday menus, and bakery items.',
-      permissions: JSON.stringify(['KITCHEN_MENU', 'KITCHEN_CONSUMPTION', 'KITCHEN_REQUESTS']),
-    },
-    // 18-19. Cook Helpers (2)
-    {
-      username: 'cookhelper1',
-      email: 'cookhelper1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.COOK_HELPER,
-      fullName: 'Muhammad Imran',
-      fatherHusbandName: 'Muhammad Boota',
-      cnic: '36302-8000001-9',
-      address: 'Sameejabad, Multan',
-      phoneNumber: '0308-4440001',
-      department: 'Kitchen & Food Preparation',
-      emergencyContact: '0300-3210001 (Father: Muhammad Boota)',
-      notes: 'Kitchen Helper. Vegetable chopping, kneading flour, cleaning utensils, ration fetching.',
-      permissions: JSON.stringify(['KITCHEN_TASKS', 'DUTY_LOG']),
-    },
-    {
-      username: 'cookhelper2',
-      email: 'cookhelper2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.COOK_HELPER,
-      fullName: 'Zahid Mahmood',
-      fatherHusbandName: 'Ghulam Haider',
-      cnic: '36302-8000002-1',
-      address: 'Mumtazabad, Multan',
-      phoneNumber: '0308-4440002',
-      department: 'Kitchen & Food Preparation',
-      emergencyContact: '0300-3210002 (Brother: Khalid Mahmood)',
-      notes: 'Kitchen Helper. Dishwashing, stock stacking, and kitchen sanitation.',
-      permissions: JSON.stringify(['KITCHEN_TASKS', 'DUTY_LOG']),
-    },
-    // 20-21. Sweepers (2)
-    {
-      username: 'sweeper1',
-      email: 'sweeper1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.SWEEPER,
-      fullName: 'Babu Masih',
-      fatherHusbandName: 'Sadiq Masih',
-      cnic: '36302-9000001-3',
-      address: 'Christian Colony, Multan Cantt',
-      phoneNumber: '0309-5550001',
-      department: 'Sanitation, Cleaning & Hygiene',
-      emergencyContact: '0300-8520001 (Son: Robin Masih)',
-      notes: 'Senior Sanitation Staff. Responsible for hostel corridors, bathrooms, and compound grounds.',
-      permissions: JSON.stringify(['CLEANING_TASKS', 'DUTY_LOG']),
-    },
-    {
-      username: 'sweeper2',
-      email: 'sweeper2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.SWEEPER,
-      fullName: 'Ashraf Masih',
-      fatherHusbandName: 'Boota Masih',
-      cnic: '36302-9000002-5',
-      address: 'Christian Colony, Multan Cantt',
-      phoneNumber: '0309-5550002',
-      department: 'Sanitation, Cleaning & Hygiene',
-      emergencyContact: '0300-8520002 (Brother: Yousaf Masih)',
-      notes: 'Sanitation Staff. Assigned to dining hall, kitchen area, and junior wing sanitation.',
-      permissions: JSON.stringify(['CLEANING_TASKS', 'DUTY_LOG']),
-    },
-    // 22-23. Security Guards (2)
-    {
-      username: 'security1',
-      email: 'security1@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.SECURITY_GUARD,
-      fullName: 'Subedar (R) Muhammad Hanif',
-      fatherHusbandName: 'Fateh Muhammad',
-      cnic: '36302-0100001-7',
-      address: 'Qasim Bela, Multan Cantt',
-      phoneNumber: '0310-6660001',
-      department: 'Security & Campus Safety',
-      emergencyContact: '0300-7410001 (Son: Major Faisal Hanif)',
-      notes: 'Day Shift Head Security Officer. Main gate register, visitor logging, campus perimeter patrol.',
-      permissions: JSON.stringify(['GATE_REGISTER', 'VISITOR_LOG', 'DUTY_LOG']),
-    },
-    {
-      username: 'security2',
-      email: 'security2@sweethome.pbm.gov.pk',
-      password: staffPassword,
-      role: Role.SECURITY_GUARD,
-      fullName: 'Havildar (R) Muhammad Akhtar',
-      fatherHusbandName: 'Ghulam Qadir',
-      cnic: '36302-0100002-9',
-      address: 'Sher Shah Road, Multan',
-      phoneNumber: '0310-6660002',
-      department: 'Security & Campus Safety',
-      emergencyContact: '0300-7410002 (Son: Yasir Akhtar)',
-      notes: 'Night Shift Security Officer. CCTV monitoring, night gate entry verification, safety checks.',
-      permissions: JSON.stringify(['GATE_REGISTER', 'VISITOR_LOG', 'DUTY_LOG']),
-    },
-  ];
-
-  const motherMaidEmployeeIds: string[] = [];
-  const createdEmployees: { id: string; role: Role; name: string }[] = [];
-
-  for (const s of staffList) {
-    const user = await prisma.user.upsert({
-      where: { email: s.email },
-      update: {
-        password: s.password,
-        role: s.role,
-        permissions: s.permissions,
-      },
-      create: {
-        username: s.username,
-        email: s.email,
-        password: s.password,
-        role: s.role,
-        status: 'ACTIVE',
-        permissions: s.permissions,
-      },
-    });
-
-    const emp = await prisma.employee.upsert({
-      where: { cnic: s.cnic },
-      update: {
-        userId: user.id,
-        fullName: s.fullName,
-        fatherHusbandName: s.fatherHusbandName,
-        address: s.address,
-        phoneNumber: s.phoneNumber,
-        role: s.role,
-        department: s.department,
-        emergencyContact: s.emergencyContact,
-        notes: s.notes,
-        permissions: s.permissions,
-      },
-      create: {
-        userId: user.id,
-        fullName: s.fullName,
-        fatherHusbandName: s.fatherHusbandName,
-        cnic: s.cnic,
-        address: s.address,
-        phoneNumber: s.phoneNumber,
-        role: s.role,
-        department: s.department,
-        emergencyContact: s.emergencyContact,
-        notes: s.notes,
-        permissions: s.permissions,
-      },
-    });
-
-    createdEmployees.push({ id: emp.id, role: s.role, name: s.fullName });
-    if (s.role === Role.MOTHER_MAID) {
-      motherMaidEmployeeIds.push(emp.id);
-    }
-  }
-
-  console.log(`✅ Created ${staffList.length} staff records (All 23 positions with individual accounts)`);
-
-  // 7. Sample Children Profiles with assignments
+  // 11. Sample Children Profiles
   const sampleChildrenData = [
     {
       childId: 'PBM-SHM-001',
@@ -640,102 +1019,22 @@ async function main() {
       heightCm: 128,
       weightKg: 26.5,
     },
-    {
-      childId: 'PBM-SHM-005',
-      fullName: 'Zain Abbas',
-      fatherGuardianName: 'Syed Abbas Ali (Late)',
-      dateOfBirth: new Date('2015-09-30'),
-      gender: 'MALE',
-      bFormNo: '36302-1234509-9',
-      admissionNo: 'ADM-2023-019',
-      admissionDate: new Date('2023-04-12'),
-      guardianName: 'Syeda Batool',
-      guardianRelation: 'Mother',
-      guardianContact: '0304-4321098',
-      address: 'Shah Shams Colony, Multan',
-      status: 'ACTIVE',
-      bloodGroup: 'O-',
-      allergies: 'None',
-      chronicConditions: 'None',
-      heightCm: 136,
-      weightKg: 31.0,
-    },
-    {
-      childId: 'PBM-SHM-006',
-      fullName: 'Hamza Tariq',
-      fatherGuardianName: 'Tariq Mehmood (Late)',
-      dateOfBirth: new Date('2014-06-10'),
-      gender: 'MALE',
-      bFormNo: '36302-2345098-1',
-      admissionNo: 'ADM-2022-031',
-      admissionDate: new Date('2022-08-20'),
-      guardianName: 'Shahnaz Tariq',
-      guardianRelation: 'Mother',
-      guardianContact: '0305-3210987',
-      address: 'Makhdoom Rashid, Multan',
-      status: 'ACTIVE',
-      bloodGroup: 'B+',
-      allergies: 'None',
-      chronicConditions: 'None',
-      heightCm: 140,
-      weightKg: 33.0,
-    },
-    {
-      childId: 'PBM-SHM-007',
-      fullName: 'Umar Farooq',
-      fatherGuardianName: 'Farooq Ahmed (Late)',
-      dateOfBirth: new Date('2017-01-25'),
-      gender: 'MALE',
-      bFormNo: '36302-3456109-3',
-      admissionNo: 'ADM-2024-005',
-      admissionDate: new Date('2024-01-10'),
-      guardianName: 'Naseem Akhtar',
-      guardianRelation: 'Grandmother',
-      guardianContact: '0306-2109876',
-      address: 'Jahangirabad, Khanewal Road, Multan',
-      status: 'ACTIVE',
-      bloodGroup: 'A+',
-      allergies: 'None',
-      chronicConditions: 'None',
-      heightCm: 120,
-      weightKg: 22.0,
-    },
-    {
-      childId: 'PBM-SHM-008',
-      fullName: 'Usman Ghani',
-      fatherGuardianName: 'Muhammad Ghani (Late)',
-      dateOfBirth: new Date('2016-12-14'),
-      gender: 'MALE',
-      bFormNo: '36302-4567210-5',
-      admissionNo: 'ADM-2024-011',
-      admissionDate: new Date('2024-02-15'),
-      guardianName: 'Gulshan Bibi',
-      guardianRelation: 'Mother',
-      guardianContact: '0307-1098765',
-      address: 'Basti Khudadad, Multan',
-      status: 'ACTIVE',
-      bloodGroup: 'B-',
-      allergies: 'None',
-      chronicConditions: 'None',
-      heightCm: 124,
-      weightKg: 24.5,
-    },
   ];
 
-  const createdChildren = [];
   for (let i = 0; i < sampleChildrenData.length; i++) {
     const c = sampleChildrenData[i];
     const assignedBedId = bedList[i % bedList.length];
     const assignedClassId = classList[i % classList.length];
     const assignedMotherMaidId = motherMaidEmployeeIds[i % motherMaidEmployeeIds.length];
 
-    // Mark bed as occupied
-    await prisma.bed.update({
-      where: { id: assignedBedId },
-      data: { status: 'OCCUPIED' },
-    });
+    if (assignedBedId) {
+      await prisma.bed.update({
+        where: { id: assignedBedId },
+        data: { status: 'OCCUPIED' },
+      });
+    }
 
-    const bedRecord = await prisma.bed.findUnique({ where: { id: assignedBedId } });
+    const bedRecord = assignedBedId ? await prisma.bed.findUnique({ where: { id: assignedBedId } }) : null;
 
     const child = await prisma.child.upsert({
       where: { childId: c.childId },
@@ -764,7 +1063,6 @@ async function main() {
       },
     });
 
-    // Medical Record
     await prisma.medicalRecord.upsert({
       where: { childId: child.id },
       update: {},
@@ -778,28 +1076,9 @@ async function main() {
         emergencyNotes: 'Contact Sweet Home Medical Officer / Incharge immediately in case of emergency.',
       },
     });
-
-    // Education Record
-    await prisma.educationRecord.create({
-      data: {
-        childId: child.id,
-        classId: assignedClassId,
-        academicYear: '2024-2025',
-        schoolName: 'Sweet Home Model School Multan',
-        examTerm: 'Mid Term Exam',
-        totalMarks: 500,
-        obtainedMarks: 410 + (i * 10),
-        grade: 'A',
-        remarks: 'Excellent discipline and regular attendance. Shows keen interest in mathematics and arts.',
-      },
-    });
-
-    createdChildren.push(child);
   }
 
-  console.log(`✅ Created ${createdChildren.length} children profiles with medical, hostel & academic links`);
-
-  // 8. Inventory Items (Grains, Oils, Hygiene, School items)
+  // 12. Inventory Items
   const inventoryItemsData = [
     { name: 'Super Basmati Rice (Karnal)', categoryCode: 'FOOD_RATION', unit: 'kg', currentStock: 350, minStock: 50, supplier: 'Al-Madina Grain Merchant Multan' },
     { name: 'Wheat Flour (Chakki Atta)', categoryCode: 'FOOD_RATION', unit: 'kg', currentStock: 800, minStock: 100, supplier: 'Multan Flour Mills' },
@@ -809,51 +1088,32 @@ async function main() {
     { name: 'White Sugar (Refined)', categoryCode: 'FOOD_RATION', unit: 'kg', currentStock: 200, minStock: 40, supplier: 'Chenab General Store' },
     { name: 'Tea Leaves (Supreme Black)', categoryCode: 'FOOD_RATION', unit: 'kg', currentStock: 35, minStock: 10, supplier: 'Chenab General Store' },
     { name: 'Fresh Milk (Daily supply)', categoryCode: 'FOOD_RATION', unit: 'liters', currentStock: 60, minStock: 20, supplier: 'Bismillah Dairy Farm Multan' },
-    { name: 'Poultry Chicken (Fresh)', categoryCode: 'FOOD_RATION', unit: 'kg', currentStock: 40, minStock: 15, supplier: 'Madina Broiler Shop Multan' },
     { name: 'Lifebuoy / Dettol Bath Soap', categoryCode: 'CLEANING', unit: 'bars', currentStock: 150, minStock: 30, supplier: 'Chenab General Store' },
     { name: 'Surf Excel Detergent Powder', categoryCode: 'CLEANING', unit: 'kg', currentStock: 80, minStock: 20, supplier: 'Chenab General Store' },
-    { name: 'Phenyl Disinfectant Bottles', categoryCode: 'CLEANING', unit: 'bottles (3L)', currentStock: 25, minStock: 8, supplier: 'Chenab General Store' },
-    { name: 'PBM School Uniform Sets (Boys)', categoryCode: 'CLOTHING', unit: 'sets', currentStock: 45, minStock: 15, supplier: 'National Uniform Tailors Multan' },
-    { name: 'Black Leather School Shoes', categoryCode: 'CLOTHING', unit: 'pairs', currentStock: 30, minStock: 10, supplier: 'Bata / Service Store Multan' },
-    { name: 'School Notebooks (Single Line)', categoryCode: 'EDUCATION', unit: 'copies', currentStock: 250, minStock: 50, supplier: 'Kitab Markaz Multan' },
-    { name: 'Ballpoint Pens (Blue/Black pack)', categoryCode: 'EDUCATION', unit: 'packets', currentStock: 40, minStock: 10, supplier: 'Kitab Markaz Multan' },
-    { name: 'Panadol Syrup 120ml', categoryCode: 'MEDICAL', unit: 'bottles', currentStock: 20, minStock: 5, supplier: 'Shifa Medicos Multan' },
-    { name: 'Disinfectant Bandage Strips', categoryCode: 'MEDICAL', unit: 'box (100s)', currentStock: 12, minStock: 4, supplier: 'Shifa Medicos Multan' },
   ];
 
   for (const item of inventoryItemsData) {
     const catId = categoryMap[item.categoryCode];
     if (catId) {
-      const createdItem = await prisma.inventoryItem.create({
-        data: {
-          name: item.name,
-          categoryId: catId,
-          unit: item.unit,
-          currentStock: item.currentStock,
-          minStock: item.minStock,
-          supplier: item.supplier,
-          status: item.currentStock <= item.minStock ? 'LOW_STOCK' : 'IN_STOCK',
-          notes: 'Standard authorized stock for sweet home campus operations',
-        },
-      });
-
-      // Initial stock transaction
-      await prisma.stockTransaction.create({
-        data: {
-          itemId: createdItem.id,
-          transactionType: 'STOCK_IN',
-          quantity: item.currentStock,
-          unit: item.unit,
-          responsiblePerson: 'Muhammad Tariq Javed (Account Assistant)',
-          reason: 'Initial Opening Balance for ERP initialization',
-        },
-      });
+      const existing = await prisma.inventoryItem.findFirst({ where: { name: item.name } });
+      if (!existing) {
+        await prisma.inventoryItem.create({
+          data: {
+            name: item.name,
+            categoryId: catId,
+            unit: item.unit,
+            currentStock: item.currentStock,
+            minStock: item.minStock,
+            supplier: item.supplier,
+            status: item.currentStock <= item.minStock ? 'LOW_STOCK' : 'IN_STOCK',
+            notes: 'Standard authorized stock for sweet home campus operations',
+          },
+        });
+      }
     }
   }
 
-  console.log(`✅ Seeded ${inventoryItemsData.length} Inventory & Ration items with transactions`);
-
-  // 9. Daily Weekly Menu (Monday to Sunday)
+  // 13. Daily Weekly Menu
   const weeklyMenu = [
     {
       dayOfWeek: 'MONDAY',
@@ -914,98 +1174,27 @@ async function main() {
     });
   }
 
-  console.log(`✅ Seeded 7-day Institutional Daily Meal Menus (Breakfast, Lunch, Dinner)`);
-
-  // 10. Suppliers
+  // 14. Suppliers
   const suppliersData = [
     { name: 'Al-Madina Grain Merchant Multan', contactPerson: 'Haji Muhammad Asghar', phone: '0300-7355112', email: 'almadina.grains@gmail.com', address: 'Grain Market, Chowk Kumharanwala, Multan', ntn: '1234567-8' },
     { name: 'Multan Flour Mills Ltd.', contactPerson: 'Sheikh Tariq Mahmood', phone: '0301-8644221', email: 'orders@multanflour.com.pk', address: 'Industrial Estate Phase 1, Multan', ntn: '2345678-9' },
     { name: 'Chenab General Store & Ration Suppliers', contactPerson: 'Malik Zafar Iqbal', phone: '0302-9533110', email: 'chenab.ration@yahoo.com', address: 'Hussain Agahi Bazar, Multan', ntn: '3456789-0' },
-    { name: 'Shifa Medicos & Surgical Multan', contactPerson: 'Dr. Salman Haider', phone: '0303-6211998', email: 'shifa.medicos.mul@gmail.com', address: 'Nishtar Road, Multan', ntn: '4567890-1' },
   ];
 
-  const supplierList = [];
   for (const sup of suppliersData) {
     const existing = await prisma.supplier.findFirst({ where: { name: sup.name } });
-    if (existing) {
-      supplierList.push(existing);
-    } else {
-      const s = await prisma.supplier.create({ data: sup });
-      supplierList.push(s);
+    if (!existing) {
+      await prisma.supplier.create({ data: sup });
     }
   }
 
-  // 11. Initial Purchases & Integrated Finance Transactions
-  const accountOfficer = createdEmployees.find(e => e.role === Role.ACCOUNT_ASSISTANT);
-
-  const existingPO = await prisma.purchase.findUnique({ where: { purchaseNumber: 'PO-2026-0001' } });
-  if (!existingPO && supplierList.length > 0) {
-    const p1 = await prisma.purchase.create({
-      data: {
-        purchaseNumber: 'PO-2026-0001',
-        supplierId: supplierList[0].id,
-        purchaseDate: new Date('2026-03-01'),
-        totalAmount: 145000,
-        billNumber: 'BILL-AMG-8821',
-        paymentStatus: 'PAID',
-        paymentMethod: 'CHEQUE',
-        responsiblePersonId: accountOfficer?.id,
-        notes: 'Monthly bulk grain & pulses procurement for March 2026',
-        items: {
-          create: [
-            { itemName: 'Super Basmati Rice (Karnal)', quantity: 350, unitPrice: 280, totalPrice: 98000, unit: 'kg' },
-            { itemName: 'Daal Chana Special', quantity: 120, unitPrice: 250, totalPrice: 30000, unit: 'kg' },
-            { itemName: 'Daal Moong Washed', quantity: 60, unitPrice: 283.33, totalPrice: 17000, unit: 'kg' },
-          ],
-        },
-      },
-    });
-
-    // Automatically record finance transaction for purchase
-    const rationExpCat = expCatMap['Food & Ration Expenses'];
-    if (rationExpCat) {
-      await prisma.financeTransaction.create({
-        data: {
-          type: 'EXPENSE',
-          date: new Date('2026-03-01'),
-          amount: 145000,
-          categoryId: rationExpCat,
-          description: 'Cheque Payment for Bulk Ration Purchase (PO-2026-0001) - Al-Madina Grain Merchant',
-          responsiblePersonId: accountOfficer?.id,
-          referenceNumber: 'CHQ-NBP-449102',
-          paymentMethod: 'CHEQUE',
-          purchaseId: p1.id,
-          notes: 'Duly verified by Account Assistant and approved by Incharge Sweet Home Multan.',
-        },
-      });
-    }
-  }
-
-  // 12. Income / Grant Allocation
-  const existingGrant = await prisma.financeTransaction.findFirst({ where: { referenceNumber: 'PBM-HQ-GRNT-Q1-2026' } });
-  if (!existingGrant) {
-    await prisma.financeTransaction.create({
-      data: {
-        type: 'GRANT',
-        date: new Date('2026-01-01'),
-        amount: 2500000,
-        description: 'Quarterly Welfare Grant Allocation from Head Office (Pakistan Bait-ul-Maal Islamabad)',
-        responsiblePersonId: accountOfficer?.id,
-        referenceNumber: 'PBM-HQ-GRNT-Q1-2026',
-        paymentMethod: 'BANK_TRANSFER',
-        notes: 'Funds released for Sweet Home Multan operational expenditures (Food, Education, Utilities, Care).',
-      },
-    });
-  }
-
-  // 13. System Settings
+  // 15. System Settings
   const settingsData = [
     { key: 'INSTITUTION_NAME', value: 'Pakistan Bait-ul-Maal Sweet Home Multan', group: 'INSTITUTION', description: 'Official name of the welfare facility' },
     { key: 'INSTITUTION_CODE', value: 'PBM-SH-MUL-01', group: 'INSTITUTION', description: 'Government registry code' },
     { key: 'LOCATION_ADDRESS', value: 'Sweet Home Complex, Near Eidgah, LMQ Road, Multan, Punjab, Pakistan', group: 'INSTITUTION', description: 'Physical address' },
-    { key: 'TOTAL_BED_CAPACITY', value: '64', group: 'HOSTEL', description: 'Total hostel bed capacity in Block A and Block B' },
-    { key: 'DAILY_RATION_PER_CHILD_KG', value: '0.45', group: 'MESS', description: 'Standard caloric ration benchmark' },
-    { key: 'EMERGENCY_CONTACT_1', value: '061-9200450 (Sweet Home Control Room)', group: 'SECURITY', description: '24/7 Helpline' },
+    { key: 'TOTAL_STAFF_SANCTIONED', value: '23', group: 'HR', description: 'Sanctioned strength of official staff members' },
+    { key: 'EMERGENCY_CONTACT_1', value: '061-9200450 (Sweet Home Control Room)', group: 'SECURITY', description: '24/7 Control Helpline' },
   ];
 
   for (const set of settingsData) {
@@ -1016,7 +1205,7 @@ async function main() {
     });
   }
 
-  // 14. Initial Audit Log
+  // 16. Initial Audit Log
   const inchargeUser = await prisma.user.findUnique({ where: { email: 'incharge@sweethome.pbm.gov.pk' } });
   if (inchargeUser) {
     await prisma.auditLog.create({
@@ -1026,7 +1215,7 @@ async function main() {
         action: 'SYSTEM_INIT',
         module: 'SETTINGS',
         recordId: 'INIT-001',
-        details: 'Initial system configuration and database seeding completed for Sweet Home Multan ERP.',
+        details: 'Initial system configuration, database models, RBAC permissions, and 23 staff accounts seeded.',
         ipAddress: '127.0.0.1',
       },
     });

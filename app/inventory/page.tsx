@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { InventoryManagement } from '@/components/inventory/InventoryManagement';
 
 export default async function InventoryPage() {
-  await requireAuth();
+  await requireModuleAccess('inventory');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function InventoryPage() {
     </AppLayout>
   );
 }
+

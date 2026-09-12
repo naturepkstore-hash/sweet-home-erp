@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SettingsManagement } from '@/components/settings/SettingsManagement';
 
 export default async function SettingsPage() {
-  await requireAuth();
+  await requireModuleAccess('settings');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function SettingsPage() {
     </AppLayout>
   );
 }
+

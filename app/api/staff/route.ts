@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       phoneNumber,
       role,
       department,
+      joiningDate,
       employmentStatus = 'ACTIVE',
       emergencyContact,
       photo,
@@ -94,11 +95,19 @@ export async function POST(request: Request) {
       permissions = [],
     } = body;
 
-    // Field validation - NO joiningDate
+    // Field validation
     if (!fullName || !fatherHusbandName || !cnic || !phoneNumber || !role) {
       return NextResponse.json(
         { error: 'Full Name, Father/Husband Name, CNIC, Phone Number, and Role are mandatory' },
         { status: 400 }
+      );
+    }
+
+    // Security Check: Non-Incharge CANNOT assign INCHARGE role
+    if (role === Role.INCHARGE && currentUser.role !== Role.INCHARGE) {
+      return NextResponse.json(
+        { error: 'Only the Incharge can create or assign Incharge-level authority' },
+        { status: 403 }
       );
     }
 
@@ -108,17 +117,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'An employee with this CNIC already exists' }, { status: 400 });
     }
 
+    // Look up RoleDefinition and Department
+    const roleDef = await prisma.roleDefinition.findUnique({ where: { name: role } });
+    const deptDef = department
+      ? await prisma.department.findFirst({
+          where: {
+            OR: [
+              { name: { contains: department } },
+              { code: department.toUpperCase() },
+            ],
+          },
+        })
+      : null;
+
     let createdUserId: string | undefined;
 
     if (createAccount) {
-      const staffEmail = email || `${username || cnic.replace(/[^0-9]/g, '')}@sweethome.pbm.gov.pk`;
-      const staffUsername = username || cnic.replace(/[^0-9]/g, '');
+      const cleanUsername = username?.trim() || cnic.replace(/[^0-9]/g, '');
+      const staffEmail = email?.trim() || `${cleanUsername}@sweethome.pbm.gov.pk`;
       const plainPassword = password || 'PBM@Staff2026!';
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
       const existingUser = await prisma.user.findFirst({
         where: {
-          OR: [{ email: staffEmail }, { username: staffUsername }],
+          OR: [{ email: staffEmail.toLowerCase() }, { username: cleanUsername.toLowerCase() }],
         },
       });
 
@@ -131,10 +153,11 @@ export async function POST(request: Request) {
 
       const newUser = await prisma.user.create({
         data: {
-          email: staffEmail,
-          username: staffUsername,
+          email: staffEmail.toLowerCase(),
+          username: cleanUsername.toLowerCase(),
           password: hashedPassword,
           role: role as Role,
+          roleId: roleDef?.id,
           status: employmentStatus === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
           permissions: JSON.stringify(permissions),
         },
@@ -152,7 +175,10 @@ export async function POST(request: Request) {
         address: address || '',
         phoneNumber,
         role: role as Role,
+        roleId: roleDef?.id,
         department: department || 'Operations',
+        departmentId: deptDef?.id,
+        joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
         employmentStatus,
         emergencyContact: emergencyContact || '',
         photo: photo || null,
@@ -176,3 +202,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create employee record' }, { status: 500 });
   }
 }
+

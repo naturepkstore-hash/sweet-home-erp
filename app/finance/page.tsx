@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { FinanceManagement } from '@/components/finance/FinanceManagement';
 
 export default async function FinancePage() {
-  await requireAuth();
+  await requireModuleAccess('finance');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function FinancePage() {
     </AppLayout>
   );
 }
+

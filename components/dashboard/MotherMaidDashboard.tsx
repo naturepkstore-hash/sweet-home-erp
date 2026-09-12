@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Baby, CheckCircle2, HeartPulse, Sparkles, ClipboardList, Bed, AlertCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { EmployeeDutyAssignments } from './EmployeeDutyAssignments';
 
 interface MotherMaidDashboardProps {
   user: {
@@ -90,6 +91,8 @@ export function MotherMaidDashboard({ user, assignedChildren }: MotherMaidDashbo
           </div>
         </div>
       </div>
+
+      <EmployeeDutyAssignments />
 
       {/* Grid: Care Checklist + Quick Health Observation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

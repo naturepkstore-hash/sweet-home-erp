@@ -93,6 +93,35 @@ export async function PUT(
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 
+    // Security Guard: Prevent non-Incharge from modifying Incharge
+    if (existingEmp.role === Role.INCHARGE && currentUser.role !== Role.INCHARGE) {
+      return NextResponse.json(
+        { error: 'Only the Incharge can modify or manage the Incharge account' },
+        { status: 403 }
+      );
+    }
+
+    // Security Guard: Prevent non-Incharge from assigning INCHARGE role to anyone
+    if (role === Role.INCHARGE && currentUser.role !== Role.INCHARGE) {
+      return NextResponse.json(
+        { error: 'Only the Incharge can delegate or assign Incharge-level authority' },
+        { status: 403 }
+      );
+    }
+
+    // Look up RoleDefinition and Department if updating
+    const roleDef = role ? await prisma.roleDefinition.findUnique({ where: { name: role } }) : undefined;
+    const deptDef = department
+      ? await prisma.department.findFirst({
+          where: {
+            OR: [
+              { name: { contains: department } },
+              { code: department.toUpperCase() },
+            ],
+          },
+        })
+      : undefined;
+
     // Update employee record
     const updatedEmployee = await prisma.employee.update({
       where: { id },
@@ -102,7 +131,9 @@ export async function PUT(
         address: address ?? existingEmp.address,
         phoneNumber: phoneNumber ?? existingEmp.phoneNumber,
         role: role ? (role as Role) : existingEmp.role,
+        roleId: roleDef ? roleDef.id : existingEmp.roleId,
         department: department ?? existingEmp.department,
+        departmentId: deptDef ? deptDef.id : existingEmp.departmentId,
         employmentStatus: employmentStatus ?? existingEmp.employmentStatus,
         emergencyContact: emergencyContact ?? existingEmp.emergencyContact,
         notes: notes ?? existingEmp.notes,
@@ -114,7 +145,10 @@ export async function PUT(
     if (existingEmp.userId) {
       const userUpdateData: Record<string, unknown> = {};
 
-      if (role) userUpdateData.role = role as Role;
+      if (role) {
+        userUpdateData.role = role as Role;
+        if (roleDef) userUpdateData.roleId = roleDef.id;
+      }
       if (accountStatus) userUpdateData.status = accountStatus;
       if (employmentStatus && !accountStatus) {
         userUpdateData.status = employmentStatus === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
@@ -162,6 +196,21 @@ export async function DELETE(
       );
     }
 
+    const targetEmp = await prisma.employee.findUnique({
+      where: { id },
+    });
+
+    if (!targetEmp) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    }
+
+    if (targetEmp.role === Role.INCHARGE) {
+      return NextResponse.json(
+        { error: 'The primary institutional Incharge account cannot be deleted or archived' },
+        { status: 403 }
+      );
+    }
+
     // Soft-delete / archive
     const archivedEmp = await prisma.employee.update({
       where: { id },
@@ -191,3 +240,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to archive employee' }, { status: 500 });
   }
 }
+

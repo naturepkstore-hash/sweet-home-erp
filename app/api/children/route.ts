@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { Role } from '@prisma/client';
 import { logAudit } from '@/lib/audit';
+import { isPersistedChildPhotoUrl } from '@/lib/child-photo';
 
 export async function GET(request: Request) {
   try {
@@ -14,6 +15,19 @@ export async function GET(request: Request) {
     const motherMaidId = searchParams.get('motherMaidId') || '';
 
     const where: Record<string, unknown> = {};
+
+    if (user.role === Role.MOTHER_MAID) {
+      if (!user.employeeId) {
+        return NextResponse.json({ success: true, children: [] });
+      }
+      where.motherMaidId = user.employeeId;
+    } else if (
+      user.role !== Role.INCHARGE &&
+      user.role !== Role.ACCOUNT_ASSISTANT &&
+      user.role !== Role.CLERK
+    ) {
+      return NextResponse.json({ error: 'Unauthorized to access child records' }, { status: 403 });
+    }
 
     if (search) {
       where.OR = [
@@ -33,13 +47,8 @@ export async function GET(request: Request) {
       where.status = status;
     }
 
-    if (motherMaidId && motherMaidId !== 'ALL') {
+    if (motherMaidId && motherMaidId !== 'ALL' && user.role !== Role.MOTHER_MAID) {
       where.motherMaidId = motherMaidId;
-    }
-
-    // If mother maid is logged in, show her assigned children by default if requested
-    if (user.role === Role.MOTHER_MAID && user.employeeId && searchParams.get('onlyMine') === 'true') {
-      where.motherMaidId = user.employeeId;
     }
 
     const children = await prisma.child.findMany({
@@ -116,6 +125,10 @@ export async function POST(request: Request) {
         { error: 'Full Name, Father/Guardian Name, Date of Birth, and Admission Number are mandatory' },
         { status: 400 }
       );
+    }
+
+    if (photo && !isPersistedChildPhotoUrl(photo)) {
+      return NextResponse.json({ error: 'Child photo URL is not a valid persisted image URL' }, { status: 400 });
     }
 
     // Auto-generate childId if not supplied

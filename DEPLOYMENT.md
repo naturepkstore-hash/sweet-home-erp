@@ -57,6 +57,9 @@ JWT_SECRET="pbm-sweet-home-multan-jwt-secret-key-2026-production"
 
 # Base Application URL
 NEXT_PUBLIC_APP_URL="https://sweet-home-erp.vercel.app"
+
+# Server-only Vercel Blob token for persistent child profile photos
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 ```
 
 ---
@@ -98,6 +101,7 @@ npx tsx prisma/seed.ts
    - `DATABASE_URL`: Your PostgreSQL URI.
    - `JWT_SECRET`: A secure 64-character string.
    - `NEXT_PUBLIC_APP_URL`: Your Vercel deployment URL.
+   - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token for child profile photos.
 3. Set Build Command: `prisma generate && next build` (or leave default `npm run build`).
 4. Click **Deploy**.
 

@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { EducationManagement } from '@/components/education/EducationManagement';
 
 export default async function EducationPage() {
-  await requireAuth();
+  await requireModuleAccess('education');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function EducationPage() {
     </AppLayout>
   );
 }
+

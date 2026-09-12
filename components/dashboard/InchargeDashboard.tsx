@@ -72,9 +72,9 @@ export function InchargeDashboard({
   const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Page Title & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 animate-fade-in">
+      {/* Top Welcome & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Institutional Operations Command Dashboard
@@ -87,21 +87,21 @@ export function InchargeDashboard({
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/children?action=new"
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-xs btn-interactive"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Admit Child</span>
           </Link>
           <Link
             href="/attendance"
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs btn-interactive"
           >
             <UserCheck className="w-4 h-4" />
             <span>Attendance</span>
           </Link>
           <Link
             href="/reports"
-            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs btn-interactive"
           >
             <FileText className="w-4 h-4 text-slate-500" />
             <span>Reports</span>
@@ -112,7 +112,7 @@ export function InchargeDashboard({
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Children */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between card-hover animate-fade-in-up stagger-1">
           <div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Enrolled Children
@@ -131,7 +131,7 @@ export function InchargeDashboard({
         </div>
 
         {/* Staff Force */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between card-hover animate-fade-in-up stagger-2">
           <div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Staff Positions
@@ -149,7 +149,7 @@ export function InchargeDashboard({
         </div>
 
         {/* Hostel Occupancy */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between card-hover animate-fade-in-up stagger-3">
           <div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Hostel Beds (64 Total)
@@ -167,7 +167,7 @@ export function InchargeDashboard({
         </div>
 
         {/* Monthly Expenses */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between card-hover animate-fade-in-up stagger-4">
           <div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Monthly Expenditure
@@ -180,7 +180,7 @@ export function InchargeDashboard({
               <span>Within Budget Allocation</span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-700">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
             <Receipt className="w-6 h-6" />
           </div>
         </div>

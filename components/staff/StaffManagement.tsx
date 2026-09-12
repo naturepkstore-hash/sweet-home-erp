@@ -12,6 +12,7 @@ import {
   CheckCircle,
   X,
   AlertCircle,
+  Calendar,
 } from 'lucide-react';
 import { exportToExcelFile } from '@/lib/export';
 
@@ -24,6 +25,7 @@ interface EmployeeItem {
   address: string;
   role: string;
   department: string;
+  joiningDate?: string;
   employmentStatus: string;
   emergencyContact: string;
   notes: string | null;
@@ -48,7 +50,7 @@ export function StaffManagement() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState<EmployeeItem | null>(null);
 
-  // Form State - strictly NO joiningDate
+  // Form State
   const [formData, setFormData] = useState({
     fullName: '',
     fatherHusbandName: '',
@@ -57,6 +59,7 @@ export function StaffManagement() {
     address: '',
     role: 'MOTHER_MAID',
     department: 'Child Care & Wardenship Wing',
+    joiningDate: new Date().toISOString().split('T')[0],
     employmentStatus: 'ACTIVE',
     emergencyContact: '',
     notes: '',
@@ -131,8 +134,24 @@ export function StaffManagement() {
       setTimeout(() => {
         setShowAddModal(false);
         setFormSuccess(null);
+        setFormData({
+          fullName: '',
+          fatherHusbandName: '',
+          cnic: '',
+          phoneNumber: '',
+          address: '',
+          role: 'MOTHER_MAID',
+          department: 'Child Care & Wardenship Wing',
+          joiningDate: new Date().toISOString().split('T')[0],
+          employmentStatus: 'ACTIVE',
+          emergencyContact: '',
+          notes: '',
+          createAccount: true,
+          email: '',
+          password: 'PBM@Staff2026!',
+        });
         fetchStaff();
-      }, 1500);
+      }, 1200);
     } catch (err) {
       console.error(err);
       setFormError('Network error while saving employee.');
@@ -192,8 +211,11 @@ export function StaffManagement() {
 
     try {
       const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
+      const data = await res.json();
       if (res.ok) {
         fetchStaff();
+      } else {
+        alert(data.error || 'Failed to archive employee.');
       }
     } catch (err) {
       console.error(err);
@@ -209,6 +231,7 @@ export function StaffManagement() {
       'Phone Number': e.phoneNumber,
       'Designated Role': e.role,
       'Department': e.department,
+      'Joining Date': e.joiningDate ? new Date(e.joiningDate).toLocaleDateString() : 'N/A',
       'Employment Status': e.employmentStatus,
       'Emergency Contact': e.emergencyContact,
       'Residential Address': e.address,
@@ -229,10 +252,12 @@ export function StaffManagement() {
     COOK_HELPER: 'Cook Helper',
     SWEEPER: 'Sanitation Staff',
     SECURITY_GUARD: 'Security Guard',
+    DRIVER: 'Driver',
+    QARI_QARIA: 'Qari / Qaria',
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -250,14 +275,14 @@ export function StaffManagement() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={exportExcel}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs btn-interactive cursor-pointer"
           >
             <Download className="w-4 h-4 text-slate-500" />
             <span>Export Excel</span>
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs btn-interactive cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Staff</span>
@@ -266,7 +291,7 @@ export function StaffManagement() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between card-hover">
         <div className="w-full md:w-80 relative">
           <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <input
@@ -274,7 +299,7 @@ export function StaffManagement() {
             placeholder="Search by Name, CNIC, Phone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
           />
         </div>
 
@@ -284,7 +309,7 @@ export function StaffManagement() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
             >
               <option value="ALL">All Roles</option>
               <option value="INCHARGE">Incharge</option>
@@ -297,6 +322,8 @@ export function StaffManagement() {
               <option value="COOK_HELPER">Cook Helper</option>
               <option value="SWEEPER">Sweeper</option>
               <option value="SECURITY_GUARD">Security Guard</option>
+              <option value="DRIVER">Driver</option>
+              <option value="QARI_QARIA">Qari / Qaria</option>
             </select>
           </div>
 
@@ -305,7 +332,7 @@ export function StaffManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+              className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
             >
               <option value="ALL">All Status</option>
               <option value="ACTIVE">Active</option>
@@ -335,7 +362,10 @@ export function StaffManagement() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
-                    Loading staff directory...
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Loading staff directory...</span>
+                    </div>
                   </td>
                 </tr>
               ) : employees.length === 0 ? (
@@ -346,7 +376,7 @@ export function StaffManagement() {
                 </tr>
               ) : (
                 employees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={emp.id} className="table-row-hover hover:bg-slate-50/80">
                     <td className="px-4 py-3">
                       <div className="font-bold text-slate-900">{emp.fullName}</div>
                       <div className="text-[11px] text-slate-400">{emp.emergencyContact || 'No emergency contact'}</div>
@@ -390,21 +420,21 @@ export function StaffManagement() {
                             setSelectedEmp(emp);
                             setShowViewModal(true);
                           }}
-                          className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-md transition-all cursor-pointer"
+                          className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-md transition-all btn-interactive cursor-pointer"
                           title="View Profile"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleOpenEdit(emp)}
-                          className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-md transition-all cursor-pointer"
+                          className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-md transition-all btn-interactive cursor-pointer"
                           title="Edit & Credentials"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleArchive(emp.id, emp.fullName)}
-                          className="p-1.5 hover:bg-red-50 text-red-600 rounded-md transition-all cursor-pointer"
+                          className="p-1.5 hover:bg-red-50 text-red-600 rounded-md transition-all btn-interactive cursor-pointer"
                           title="Archive Employee"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -421,8 +451,8 @@ export function StaffManagement() {
 
       {/* Add New Staff Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-emerald-700" />
@@ -430,21 +460,21 @@ export function StaffManagement() {
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer"
+                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2 animate-shake">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
             {formSuccess && (
-              <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
+              <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 animate-fade-in">
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 <span>{formSuccess}</span>
               </div>
@@ -460,7 +490,7 @@ export function StaffManagement() {
                     placeholder="e.g. Muhammad Aslam"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                   />
                 </div>
 
@@ -472,7 +502,7 @@ export function StaffManagement() {
                     placeholder="e.g. Noor Muhammad"
                     value={formData.fatherHusbandName}
                     onChange={(e) => setFormData({ ...formData, fatherHusbandName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                   />
                 </div>
               </div>
@@ -486,7 +516,7 @@ export function StaffManagement() {
                     placeholder="36302-XXXXXXX-X"
                     value={formData.cnic}
                     onChange={(e) => setFormData({ ...formData, cnic: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                   />
                 </div>
 
@@ -498,18 +528,18 @@ export function StaffManagement() {
                     placeholder="0300-XXXXXXX"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Role Designation *</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 font-semibold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 font-semibold input-focus-smooth"
                   >
                     <option value="MOTHER_MAID">Mother Maid</option>
                     <option value="WAITER">Waiter</option>
@@ -517,6 +547,8 @@ export function StaffManagement() {
                     <option value="COOK_HELPER">Cook Helper</option>
                     <option value="SWEEPER">Sweeper</option>
                     <option value="SECURITY_GUARD">Security Guard</option>
+                    <option value="DRIVER">Driver</option>
+                    <option value="QARI_QARIA">Qari / Qaria</option>
                     <option value="CLERK">Clerk</option>
                     <option value="HR_REPRESENTATIVE">HR / Representative</option>
                     <option value="ACCOUNT_ASSISTANT">Account Assistant</option>
@@ -531,7 +563,17 @@ export function StaffManagement() {
                     placeholder="e.g. Child Care & Wardenship"
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Joining Date</label>
+                  <input
+                    type="date"
+                    value={formData.joiningDate}
+                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                   />
                 </div>
               </div>
@@ -543,7 +585,7 @@ export function StaffManagement() {
                   placeholder="e.g. Sweet Home Staff Quarters, Block A, Multan"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                 />
               </div>
 
@@ -554,7 +596,7 @@ export function StaffManagement() {
                   placeholder="0300-XXXXXXX (Brother: Farooq)"
                   value={formData.emergencyContact}
                   onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg outline-hidden focus:ring-2 focus:ring-emerald-500 input-focus-smooth"
                 />
               </div>
 
@@ -568,7 +610,7 @@ export function StaffManagement() {
                       placeholder="e.g. staffname@sweethome.pbm.gov.pk"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full p-2 bg-white border border-slate-300 rounded-md outline-hidden"
+                      className="w-full p-2 bg-white border border-slate-300 rounded-md outline-hidden input-focus-smooth"
                     />
                   </div>
                   <div>
@@ -577,7 +619,7 @@ export function StaffManagement() {
                       type="text"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full p-2 bg-white border border-slate-300 rounded-md outline-hidden"
+                      className="w-full p-2 bg-white border border-slate-300 rounded-md outline-hidden input-focus-smooth"
                     />
                   </div>
                 </div>
@@ -587,14 +629,14 @@ export function StaffManagement() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold btn-interactive cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold shadow-xs cursor-pointer disabled:opacity-60"
+                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold shadow-xs btn-interactive cursor-pointer disabled:opacity-60"
                 >
                   {isSubmitting ? 'Saving...' : 'Save & Issue Account'}
                 </button>
@@ -606,11 +648,11 @@ export function StaffManagement() {
 
       {/* Edit Modal */}
       {showEditModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-bold text-slate-900">Edit Staff Profile & Credentials</h3>
-              <button onClick={() => setShowEditModal(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400">
+              <button onClick={() => setShowEditModal(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -623,7 +665,7 @@ export function StaffManagement() {
                     type="text"
                     value={editFormData.fullName}
                     onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md input-focus-smooth"
                   />
                 </div>
                 <div>
@@ -632,7 +674,7 @@ export function StaffManagement() {
                     type="text"
                     value={editFormData.fatherHusbandName}
                     onChange={(e) => setEditFormData({ ...editFormData, fatherHusbandName: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md input-focus-smooth"
                   />
                 </div>
               </div>
@@ -644,7 +686,7 @@ export function StaffManagement() {
                     type="text"
                     value={editFormData.phoneNumber}
                     onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md input-focus-smooth"
                   />
                 </div>
                 <div>
@@ -652,7 +694,7 @@ export function StaffManagement() {
                   <select
                     value={editFormData.employmentStatus}
                     onChange={(e) => setEditFormData({ ...editFormData, employmentStatus: e.target.value })}
-                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md input-focus-smooth"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="ON_LEAVE">ON_LEAVE</option>
@@ -668,7 +710,7 @@ export function StaffManagement() {
                   placeholder="Enter new password to reset"
                   value={editFormData.newPassword}
                   onChange={(e) => setEditFormData({ ...editFormData, newPassword: e.target.value })}
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-md input-focus-smooth"
                 />
               </div>
 
@@ -676,14 +718,14 @@ export function StaffManagement() {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md font-semibold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md font-semibold btn-interactive cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-emerald-700 text-white rounded-md font-bold cursor-pointer"
+                  className="px-5 py-2 bg-emerald-700 text-white rounded-md font-bold btn-interactive cursor-pointer"
                 >
                   {isSubmitting ? 'Updating...' : 'Save Updates'}
                 </button>
@@ -695,11 +737,11 @@ export function StaffManagement() {
 
       {/* View Profile Modal */}
       {showViewModal && selectedEmp && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center shadow-md">
                   {selectedEmp.fullName.charAt(0)}
                 </div>
                 <div>
@@ -707,7 +749,7 @@ export function StaffManagement() {
                   <p className="text-xs text-slate-500">{roleLabels[selectedEmp.role] || selectedEmp.role}</p>
                 </div>
               </div>
-              <button onClick={() => setShowViewModal(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400">
+              <button onClick={() => setShowViewModal(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -733,6 +775,14 @@ export function StaffManagement() {
                 <span className="text-slate-500">Department:</span>
                 <span className="font-semibold text-slate-800">{selectedEmp.department}</span>
               </div>
+              {selectedEmp.joiningDate && (
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-500">Joining Date:</span>
+                  <span className="font-semibold text-slate-800">
+                    {new Date(selectedEmp.joiningDate).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between py-1.5">
                 <span className="text-slate-500">Residential Address:</span>
                 <span className="font-medium text-slate-800 text-right max-w-[240px]">{selectedEmp.address}</span>
@@ -746,7 +796,7 @@ export function StaffManagement() {
             <div className="mt-5 pt-3 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold"
+                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold btn-interactive cursor-pointer"
               >
                 Close
               </button>

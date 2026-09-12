@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ReportsManagement } from '@/components/reports/ReportsManagement';
 
 export default async function ReportsPage() {
-  await requireAuth();
+  await requireModuleAccess('reports');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function ReportsPage() {
     </AppLayout>
   );
 }
+

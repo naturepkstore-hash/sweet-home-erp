@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import { hasPermission } from '@/lib/permissions';
+
+function effectiveDutyStatus(status: string, dutyDate: Date) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if ((status === 'ASSIGNED' || status === 'PENDING') && dutyDate < today) return 'OVERDUE';
+  return status;
+}
 
 export async function GET(request: Request) {
   try {
-    await requireAuth();
+    const currentUser = await requireAuth();
     const { searchParams } = new URL(request.url);
     const reportType = searchParams.get('type') || 'CHILDREN';
 
@@ -77,6 +85,33 @@ export async function GET(request: Request) {
           'Status': a.status,
           'Remarks': a.remarks || '-',
           'Marked By': a.markedBy || 'System',
+        }));
+        break;
+
+      case 'DUTIES':
+        if (!hasPermission(currentUser.role, 'duties.report', currentUser.permissions)) {
+          return NextResponse.json({ error: 'You are not authorized to access duty reports' }, { status: 403 });
+        }
+        title = 'Staff Duty Assignment & Completion Report';
+        const dutyAssignments = await prisma.dutyAssignment.findMany({
+          include: {
+            employee: { select: { fullName: true, role: true } },
+            duty: { select: { nameEnglish: true, nameUrdu: true } },
+            assignedBy: { select: { email: true, employee: { select: { fullName: true } } } },
+          },
+          orderBy: [{ dutyDate: 'desc' }, { employee: { fullName: 'asc' } }],
+        });
+        data = dutyAssignments.map((assignment, i) => ({
+          'Sr #': i + 1,
+          'Employee': assignment.employee.fullName,
+          'Role': assignment.employee.role,
+          'Duty': assignment.duty.nameEnglish,
+          'Urdu Duty': assignment.duty.nameUrdu,
+          'Date': new Date(assignment.dutyDate).toLocaleDateString(),
+          'Shift': assignment.shift,
+          'Status': effectiveDutyStatus(assignment.status, assignment.dutyDate),
+          'Assigned By': assignment.assignedBy.employee?.fullName || assignment.assignedBy.email,
+          'Completed At': assignment.completedAt ? new Date(assignment.completedAt).toLocaleString() : '-',
         }));
         break;
 

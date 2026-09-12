@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Utensils, Sparkles, CheckCircle2, Clock, ClipboardList } from 'lucide-react';
 import { Role } from '@prisma/client';
 
@@ -10,7 +10,16 @@ interface ServiceStaffDashboardProps {
     fullName: string;
     role: Role;
     department: string;
+    employeeId?: string;
   };
+}
+
+interface DutyChecklistItem {
+  id: string | number;
+  text: string;
+  urdu?: string;
+  done: boolean;
+  assignmentId?: string;
 }
 
 export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
@@ -18,6 +27,8 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
   const isWaiter = user.role === Role.WAITER;
   const isHelper = user.role === Role.COOK_HELPER;
   const isSweeper = user.role === Role.SWEEPER;
+  const isDriver = user.role === Role.DRIVER;
+  const isQari = user.role === Role.QARI_QARIA;
 
   const defaultChecklist = isWaiter
     ? [
@@ -36,6 +47,18 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
         { id: 4, text: 'Stock Stacking & Ration Bags Retrieval from Store', done: false },
         { id: 5, text: 'Dinner Prep & Cooking Utensil Deep Cleaning', done: false },
       ]
+    : isDriver
+    ? [
+        { id: 1, text: 'Vehicle Safety Check and Fuel Verification', done: true },
+        { id: 2, text: 'Approved School Pick and Drop Route', done: false },
+        { id: 3, text: 'Transport Log and Passenger Handover', done: false },
+      ]
+    : isQari
+    ? [
+        { id: 1, text: 'Morning Quran Lesson Preparation', done: true },
+        { id: 2, text: 'Children Quran Recitation Supervision', done: false },
+        { id: 3, text: 'Lesson Attendance and Progress Notes', done: false },
+      ]
     : [
         { id: 1, text: 'Hostel Block A Corridors & Staircase Mopping with Phenyl', done: true },
         { id: 2, text: 'Hostel Bathrooms & Washrooms Deep Scrubbing & Disinfection', done: true },
@@ -44,18 +67,105 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
         { id: 5, text: 'Evening Trash Bin Emptying & Waste Disposal to Municipal Bin', done: false },
       ];
 
-  const [checklist, setChecklist] = useState(defaultChecklist);
+  const [checklist, setChecklist] = useState<DutyChecklistItem[]>(defaultChecklist);
   const [logNotes, setLogNotes] = useState('');
   const [logSubmitted, setLogSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const employeeId = user.employeeId || user.id;
 
-  const toggleCheck = (id: number) => {
-    setChecklist(checklist.map((item) => (item.id === id ? { ...item, done: !item.done } : item)));
+  useEffect(() => {
+    const loadDutyLog = async () => {
+      try {
+        const assignmentResponse = await fetch('/api/duty-assignments');
+        if (assignmentResponse.ok) {
+          const assignmentData = await assignmentResponse.json();
+          const assignedItems = (assignmentData.assignments || []).map((assignment: any) => ({
+            id: assignment.id,
+            assignmentId: assignment.id,
+            text: assignment.duty.nameEnglish,
+            urdu: assignment.duty.nameUrdu,
+            done: assignment.status === 'COMPLETED',
+          }));
+
+          if (assignedItems.length > 0) {
+            setChecklist(assignedItems);
+            return;
+          }
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const res = await fetch(`/api/duties?date=${today}&employeeId=${employeeId}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const duty = Array.isArray(data.duties) ? data.duties[0] : null;
+        if (!duty) return;
+
+        const savedTasks = Array.isArray(duty.tasksCompleted) ? duty.tasksCompleted : [];
+        const mappedTasks = defaultChecklist.map((item) => {
+          const savedItem = savedTasks.find((saved: any) => String(saved.id) === String(item.id) || String(saved.text) === String(item.text));
+          return {
+            ...item,
+            done: Boolean(savedItem?.done ?? item.done),
+          };
+        });
+
+        setChecklist(mappedTasks);
+        setLogNotes(duty.notes || '');
+      } catch (error) {
+        console.error('Failed to load duty log:', error);
+      }
+    };
+
+    loadDutyLog();
+  }, [employeeId]);
+
+  const toggleCheck = (id: string | number) => {
+    setChecklist(checklist.map((item) => {
+      if (item.id !== id || (item.assignmentId && item.done)) return item;
+      return { ...item, done: !item.done };
+    }));
   };
 
-  const handleSaveDutyLog = (e: React.FormEvent) => {
+  const handleSaveDutyLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLogSubmitted(true);
-    setTimeout(() => setLogSubmitted(false), 4000);
+    setIsSaving(true);
+
+    try {
+      const assignedItems = checklist.filter((item) => item.assignmentId && item.done);
+      if (assignedItems.length > 0) {
+        for (const item of assignedItems) {
+          const res = await fetch(`/api/duty-assignments/${item.assignmentId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'COMPLETED' }),
+          });
+          if (!res.ok) throw new Error('Failed to complete an assigned duty');
+        }
+      } else {
+        const res = await fetch('/api/duties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            employeeId,
+            dutyDate: new Date().toISOString(),
+            shift: isWaiter ? 'MORNING' : isHelper ? 'MORNING' : 'EVENING',
+            tasksCompleted: checklist,
+            notes: logNotes,
+            status: checklist.every((item) => item.done) ? 'COMPLETED' : 'IN_PROGRESS',
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to save duty log');
+      }
+
+      setLogSubmitted(true);
+      setTimeout(() => setLogSubmitted(false), 4000);
+    } catch (error) {
+      console.error('Duty log save error:', error);
+      setLogSubmitted(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -67,7 +177,7 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 mb-2">
               <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
               <span>
-                {isWaiter ? 'Dining & Mess Service Station' : isHelper ? 'Kitchen Assistance Station' : 'Campus Sanitation Station'}
+                {isWaiter ? 'Dining & Mess Service Station' : isHelper ? 'Kitchen Assistance Station' : isDriver ? 'Institutional Transport Station' : isQari ? 'Religious Education Station' : 'Campus Sanitation Station'}
               </span>
             </div>
             <h1 className="text-2xl font-extrabold">{user.fullName}</h1>
@@ -76,6 +186,10 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
                 ? 'Responsible for dining hall readiness, food distribution, and meal service.'
                 : isHelper
                 ? 'Assisting head cooks, food prep, dishwashing, and kitchen sanitation.'
+                : isDriver
+                ? 'Responsible for approved institutional transport and school pick and drop duties.'
+                : isQari
+                ? 'Responsible for Quran education, supervised lessons, and religious learning activities.'
                 : 'Responsible for institutional hygiene, washroom sanitation, and hostel cleanliness.'}
             </p>
           </div>
@@ -118,6 +232,7 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
                 />
                 <span className={`font-medium ${item.done ? 'line-through text-slate-500' : ''}`}>
                   {item.text}
+                  {item.urdu && <span className="mt-0.5 block text-right text-base font-normal text-slate-600" dir="rtl">{item.urdu}</span>}
                 </span>
               </div>
             ))}
@@ -153,9 +268,10 @@ export function ServiceStaffDashboard({ user }: ServiceStaffDashboardProps) {
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs shadow-xs transition-all cursor-pointer"
+                disabled={isSaving}
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs shadow-xs transition-all cursor-pointer disabled:opacity-60"
               >
-                Submit Shift Duty Log
+                {isSaving ? 'Saving Duty Log...' : 'Submit Shift Duty Log'}
               </button>
             </form>
           </div>

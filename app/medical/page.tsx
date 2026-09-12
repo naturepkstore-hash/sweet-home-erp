@@ -1,10 +1,10 @@
 import React from 'react';
-import { requireAuth } from '@/lib/auth';
+import { requireModuleAccess } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { MedicalManagement } from '@/components/medical/MedicalManagement';
 
 export default async function MedicalPage() {
-  await requireAuth();
+  await requireModuleAccess('medical');
 
   return (
     <AppLayout>
@@ -12,3 +12,4 @@ export default async function MedicalPage() {
     </AppLayout>
   );
 }
+
