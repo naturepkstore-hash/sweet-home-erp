@@ -80,6 +80,13 @@ export function middleware(request: NextRequest) {
 
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const isLoginPage = pathname === '/login';
+  const hasForceLogout = request.nextUrl.searchParams.get('logout') === '1' || request.nextUrl.searchParams.get('force') === '1';
+
+  if (isLoginPage && hasForceLogout) {
+    const response = NextResponse.next();
+    response.cookies.delete(SESSION_COOKIE_NAME);
+    return response;
+  }
 
   // 2. Unauthenticated user trying to access protected route -> Redirect to /login
   if (!sessionToken) {
@@ -110,6 +117,7 @@ export function middleware(request: NextRequest) {
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
+
 
   // 5. Role-based Route Protection Check
   const userRole = payload.role;
