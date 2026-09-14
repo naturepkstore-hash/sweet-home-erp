@@ -48,6 +48,20 @@ export async function POST(request: Request) {
       });
     }
 
+    // Unlink any existing inactive child holding target bed
+    const existingOccupant = await prisma.child.findFirst({
+      where: { bedId: newBedId },
+    });
+    if (existingOccupant && existingOccupant.id !== childId) {
+      if (existingOccupant.status === 'ACTIVE') {
+        return NextResponse.json({ error: `Selected bed is already assigned to active resident ${existingOccupant.fullName}` }, { status: 400 });
+      }
+      await prisma.child.update({
+        where: { id: existingOccupant.id },
+        data: { bedId: null, roomId: null },
+      });
+    }
+
     // Occupy new bed
     await prisma.bed.update({
       where: { id: newBedId },

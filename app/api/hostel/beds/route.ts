@@ -33,7 +33,7 @@ export async function GET() {
     buildings.forEach((b) => {
       b.rooms.forEach((r) => {
         r.beds.forEach((bed) => {
-          if (bed.status === 'AVAILABLE') {
+          if (bed.status === 'AVAILABLE' && !bed.child) {
             flatBeds.push({
               id: bed.id,
               bedNumber: bed.bedNumber,

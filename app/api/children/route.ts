@@ -120,45 +120,129 @@ export async function POST(request: Request) {
       weightKg,
     } = body;
 
-    if (!fullName || !fatherGuardianName || !dateOfBirth || !admissionNo) {
+    const trimmedFullName = typeof fullName === 'string' ? fullName.trim() : '';
+    const trimmedFatherName = typeof fatherGuardianName === 'string' ? fatherGuardianName.trim() : '';
+    const trimmedAdmissionNo = typeof admissionNo === 'string' ? admissionNo.trim() : '';
+
+    if (!trimmedFullName || !trimmedFatherName || !dateOfBirth || !trimmedAdmissionNo) {
       return NextResponse.json(
         { error: 'Full Name, Father/Guardian Name, Date of Birth, and Admission Number are mandatory' },
         { status: 400 }
       );
     }
 
+    const parsedDob = new Date(dateOfBirth);
+    if (isNaN(parsedDob.getTime())) {
+      return NextResponse.json({ error: 'Valid Date of Birth is required' }, { status: 400 });
+    }
+
+    const parsedAdmissionDate = admissionDate ? new Date(admissionDate) : new Date();
+    if (isNaN(parsedAdmissionDate.getTime())) {
+      return NextResponse.json({ error: 'Valid Admission Date is required' }, { status: 400 });
+    }
+
     if (photo && !isPersistedChildPhotoUrl(photo)) {
       return NextResponse.json({ error: 'Child photo URL is not a valid persisted image URL' }, { status: 400 });
     }
 
+    // Check if admissionNo already exists
+    const existingAdmission = await prisma.child.findUnique({
+      where: { admissionNo: trimmedAdmissionNo },
+    });
+    if (existingAdmission) {
+      return NextResponse.json(
+        { error: `Admission file number "${trimmedAdmissionNo}" is already in use by ${existingAdmission.fullName}` },
+        { status: 400 }
+      );
+    }
+
     // Auto-generate childId if not supplied
-    let generatedChildId = childId;
+    let generatedChildId = childId ? String(childId).trim() : '';
     if (!generatedChildId) {
-      const count = await prisma.child.count();
-      generatedChildId = `PBM-SHM-${(count + 1).toString().padStart(3, '0')}`;
+      const childrenWithPrefix = await prisma.child.findMany({
+        where: { childId: { startsWith: 'PBM-SHM-' } },
+        select: { childId: true },
+      });
+      let maxNum = 0;
+      for (const c of childrenWithPrefix) {
+        const match = c.childId.match(/^PBM-SHM-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      }
+      let candidateNum = maxNum + 1;
+      let candidateId = `PBM-SHM-${candidateNum.toString().padStart(3, '0')}`;
+      while (await prisma.child.findUnique({ where: { childId: candidateId } })) {
+        candidateNum++;
+        candidateId = `PBM-SHM-${candidateNum.toString().padStart(3, '0')}`;
+      }
+      generatedChildId = candidateId;
+    } else {
+      const existingChild = await prisma.child.findUnique({
+        where: { childId: generatedChildId },
+      });
+      if (existingChild) {
+        return NextResponse.json(
+          { error: `Child ID "${generatedChildId}" is already assigned to ${existingChild.fullName}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Bed & Room validation and resolution
+    let resolvedRoomId: string | null = roomId ? String(roomId).trim() : null;
+    const resolvedBedId: string | null = bedId ? String(bedId).trim() : null;
+
+    if (resolvedBedId) {
+      const bedRecord = await prisma.bed.findUnique({
+        where: { id: resolvedBedId },
+        include: { child: true },
+      });
+
+      if (!bedRecord) {
+        return NextResponse.json({ error: 'Selected hostel bed not found' }, { status: 400 });
+      }
+
+      if (bedRecord.child && bedRecord.child.id) {
+        if (bedRecord.child.status === 'ACTIVE') {
+          return NextResponse.json(
+            { error: `Selected Bed (${bedRecord.bedNumber}) is currently assigned to active resident ${bedRecord.child.fullName}` },
+            { status: 400 }
+          );
+        } else {
+          // Unlink inactive child from this bed to prevent unique constraint collision
+          await prisma.child.update({
+            where: { id: bedRecord.child.id },
+            data: { bedId: null, roomId: null },
+          });
+        }
+      }
+
+      resolvedRoomId = bedRecord.roomId;
     }
 
     // Create child record
     const newChild = await prisma.child.create({
       data: {
         childId: generatedChildId,
-        fullName,
-        fatherGuardianName,
-        dateOfBirth: new Date(dateOfBirth),
+        fullName: trimmedFullName,
+        fatherGuardianName: trimmedFatherName,
+        dateOfBirth: parsedDob,
         gender,
-        bFormNo: bFormNo || null,
-        admissionNo,
-        admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
-        guardianName: guardianName || null,
-        guardianRelation: guardianRelation || null,
-        guardianContact: guardianContact || null,
-        address: address || null,
-        photo: photo || null,
+        bFormNo: bFormNo ? String(bFormNo).trim() : null,
+        admissionNo: trimmedAdmissionNo,
+        admissionDate: parsedAdmissionDate,
+        guardianName: guardianName ? String(guardianName).trim() : null,
+        guardianRelation: guardianRelation ? String(guardianRelation).trim() : null,
+        guardianContact: guardianContact ? String(guardianContact).trim() : null,
+        address: address ? String(address).trim() : null,
+        photo: photo ? String(photo).trim() : null,
         status,
-        motherMaidId: motherMaidId || null,
-        roomId: roomId || null,
-        bedId: bedId || null,
-        classId: classId || null,
+        motherMaidId: motherMaidId ? String(motherMaidId).trim() : null,
+        roomId: resolvedRoomId,
+        bedId: resolvedBedId,
+        classId: classId ? String(classId).trim() : null,
         clothingIssued: clothingIssued || 'Standard 2 Uniforms & Seasonal Bedding',
         dietaryNotes: dietaryNotes || 'Standard Nutritious Diet',
         notes: notes || 'Enrolled in Sweet Home Multan',
@@ -166,22 +250,25 @@ export async function POST(request: Request) {
     });
 
     // If bed allocated, mark bed as OCCUPIED
-    if (bedId) {
+    if (resolvedBedId) {
       await prisma.bed.update({
-        where: { id: bedId },
+        where: { id: resolvedBedId },
         data: { status: 'OCCUPIED' },
       });
     }
 
     // Create medical record
+    const parsedHeight = heightCm !== undefined && heightCm !== null && heightCm !== '' ? parseFloat(String(heightCm)) : null;
+    const parsedWeight = weightKg !== undefined && weightKg !== null && weightKg !== '' ? parseFloat(String(weightKg)) : null;
+
     await prisma.medicalRecord.create({
       data: {
         childId: newChild.id,
-        bloodGroup: bloodGroup || 'B+',
-        allergies: allergies || 'None',
-        chronicConditions: chronicConditions || 'None',
-        heightCm: heightCm ? parseFloat(heightCm) : null,
-        weightKg: weightKg ? parseFloat(weightKg) : null,
+        bloodGroup: bloodGroup ? String(bloodGroup).trim() : 'B+',
+        allergies: allergies ? String(allergies).trim() : 'None',
+        chronicConditions: chronicConditions ? String(chronicConditions).trim() : 'None',
+        heightCm: Number.isFinite(parsedHeight) ? parsedHeight : null,
+        weightKg: Number.isFinite(parsedWeight) ? parsedWeight : null,
         emergencyNotes: 'Standard PBM child medical profile',
       },
     });
@@ -192,12 +279,22 @@ export async function POST(request: Request) {
       action: 'ADMIT_CHILD',
       module: 'CHILDREN',
       recordId: newChild.id,
-      details: `Enrolled new child ${fullName} (ID: ${generatedChildId}, Admission: ${admissionNo})`,
+      details: `Enrolled new child ${trimmedFullName} (ID: ${generatedChildId}, Admission: ${trimmedAdmissionNo})`,
     });
 
     return NextResponse.json({ success: true, child: newChild }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Admit child error:', error);
-    return NextResponse.json({ error: 'Failed to admit child record' }, { status: 500 });
+    if (error?.code === 'P2002') {
+      const targets = error?.meta?.target ? ` on field (${Array.isArray(error.meta.target) ? error.meta.target.join(', ') : error.meta.target})` : '';
+      return NextResponse.json(
+        { error: `Unique record constraint violation${targets}. Please verify admission number, child ID, and bed allocation.` },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to admit child record' },
+      { status: 500 }
+    );
   }
 }

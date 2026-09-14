@@ -107,63 +107,119 @@ export async function PUT(
       return NextResponse.json({ error: 'Child photo URL is not a valid persisted image URL' }, { status: 400 });
     }
 
-    // If bed changed, free old bed and occupy new bed
-    if (bedId && bedId !== existingChild.bedId) {
+    const targetStatus = status ?? existingChild.status;
+    const isBecomingInactive = targetStatus !== 'ACTIVE';
+
+    let nextBedId: string | null = existingChild.bedId;
+    let nextRoomId: string | null = existingChild.roomId;
+
+    if (isBecomingInactive) {
       if (existingChild.bedId) {
         await prisma.bed.update({
           where: { id: existingChild.bedId },
           data: { status: 'AVAILABLE' },
         });
       }
-      await prisma.bed.update({
-        where: { id: bedId },
-        data: { status: 'OCCUPIED' },
-      });
+      nextBedId = null;
+      nextRoomId = null;
+    } else if (Object.prototype.hasOwnProperty.call(body, 'bedId')) {
+      const requestedBedId = bedId ? String(bedId).trim() : null;
+      if (requestedBedId !== existingChild.bedId) {
+        if (existingChild.bedId) {
+          await prisma.bed.update({
+            where: { id: existingChild.bedId },
+            data: { status: 'AVAILABLE' },
+          });
+        }
+
+        if (requestedBedId) {
+          const targetBed = await prisma.bed.findUnique({
+            where: { id: requestedBedId },
+            include: { child: true },
+          });
+
+          if (!targetBed) {
+            return NextResponse.json({ error: 'Selected hostel bed not found' }, { status: 400 });
+          }
+
+          if (targetBed.child && targetBed.child.id !== id) {
+            if (targetBed.child.status === 'ACTIVE') {
+              return NextResponse.json(
+                { error: `Selected Bed (${targetBed.bedNumber}) is currently assigned to ${targetBed.child.fullName}` },
+                { status: 400 }
+              );
+            } else {
+              await prisma.child.update({
+                where: { id: targetBed.child.id },
+                data: { bedId: null, roomId: null },
+              });
+            }
+          }
+
+          await prisma.bed.update({
+            where: { id: requestedBedId },
+            data: { status: 'OCCUPIED' },
+          });
+
+          nextBedId = requestedBedId;
+          nextRoomId = targetBed.roomId;
+        } else {
+          nextBedId = null;
+          nextRoomId = null;
+        }
+      }
+    }
+
+    if (roomId !== undefined && !nextBedId) {
+      nextRoomId = roomId ? String(roomId).trim() : null;
     }
 
     const updatedChild = await prisma.child.update({
       where: { id },
       data: {
-        fullName: fullName ?? existingChild.fullName,
-        fatherGuardianName: fatherGuardianName ?? existingChild.fatherGuardianName,
+        fullName: fullName !== undefined ? String(fullName).trim() : existingChild.fullName,
+        fatherGuardianName: fatherGuardianName !== undefined ? String(fatherGuardianName).trim() : existingChild.fatherGuardianName,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : existingChild.dateOfBirth,
-        bFormNo: bFormNo ?? existingChild.bFormNo,
-        guardianName: guardianName ?? existingChild.guardianName,
-        guardianRelation: guardianRelation ?? existingChild.guardianRelation,
-        guardianContact: guardianContact ?? existingChild.guardianContact,
-        address: address ?? existingChild.address,
-        status: status ?? existingChild.status,
-        motherMaidId: motherMaidId ?? existingChild.motherMaidId,
-        roomId: roomId ?? existingChild.roomId,
-        bedId: bedId ?? existingChild.bedId,
-        classId: classId ?? existingChild.classId,
-        clothingIssued: clothingIssued ?? existingChild.clothingIssued,
-        dietaryNotes: dietaryNotes ?? existingChild.dietaryNotes,
-        notes: notes ?? existingChild.notes,
+        bFormNo: bFormNo !== undefined ? (bFormNo ? String(bFormNo).trim() : null) : existingChild.bFormNo,
+        guardianName: guardianName !== undefined ? (guardianName ? String(guardianName).trim() : null) : existingChild.guardianName,
+        guardianRelation: guardianRelation !== undefined ? (guardianRelation ? String(guardianRelation).trim() : null) : existingChild.guardianRelation,
+        guardianContact: guardianContact !== undefined ? (guardianContact ? String(guardianContact).trim() : null) : existingChild.guardianContact,
+        address: address !== undefined ? (address ? String(address).trim() : null) : existingChild.address,
+        status: targetStatus,
+        motherMaidId: motherMaidId !== undefined ? (motherMaidId ? String(motherMaidId).trim() : null) : existingChild.motherMaidId,
+        roomId: nextRoomId,
+        bedId: nextBedId,
+        classId: classId !== undefined ? (classId ? String(classId).trim() : null) : existingChild.classId,
+        clothingIssued: clothingIssued !== undefined ? clothingIssued : existingChild.clothingIssued,
+        dietaryNotes: dietaryNotes !== undefined ? dietaryNotes : existingChild.dietaryNotes,
+        notes: notes !== undefined ? notes : existingChild.notes,
         ...(Object.prototype.hasOwnProperty.call(body, 'photo')
-          ? { photo: photo || null }
+          ? { photo: photo ? String(photo).trim() : null }
           : {}),
       },
     });
 
     // Update medical record
     if (bloodGroup || allergies || chronicConditions || heightCm || weightKg) {
+      const parsedHeight = heightCm !== undefined && heightCm !== null && heightCm !== '' ? parseFloat(String(heightCm)) : undefined;
+      const parsedWeight = weightKg !== undefined && weightKg !== null && weightKg !== '' ? parseFloat(String(weightKg)) : undefined;
+
       await prisma.medicalRecord.upsert({
         where: { childId: id },
         update: {
-          bloodGroup: bloodGroup || undefined,
-          allergies: allergies || undefined,
-          chronicConditions: chronicConditions || undefined,
-          heightCm: heightCm ? parseFloat(heightCm) : undefined,
-          weightKg: weightKg ? parseFloat(weightKg) : undefined,
+          bloodGroup: bloodGroup ? String(bloodGroup).trim() : undefined,
+          allergies: allergies ? String(allergies).trim() : undefined,
+          chronicConditions: chronicConditions ? String(chronicConditions).trim() : undefined,
+          heightCm: parsedHeight !== undefined && Number.isFinite(parsedHeight) ? parsedHeight : undefined,
+          weightKg: parsedWeight !== undefined && Number.isFinite(parsedWeight) ? parsedWeight : undefined,
         },
         create: {
           childId: id,
-          bloodGroup: bloodGroup || 'B+',
-          allergies: allergies || 'None',
-          chronicConditions: chronicConditions || 'None',
-          heightCm: heightCm ? parseFloat(heightCm) : undefined,
-          weightKg: weightKg ? parseFloat(weightKg) : undefined,
+          bloodGroup: bloodGroup ? String(bloodGroup).trim() : 'B+',
+          allergies: allergies ? String(allergies).trim() : 'None',
+          chronicConditions: chronicConditions ? String(chronicConditions).trim() : 'None',
+          heightCm: parsedHeight !== undefined && Number.isFinite(parsedHeight) ? parsedHeight : null,
+          weightKg: parsedWeight !== undefined && Number.isFinite(parsedWeight) ? parsedWeight : null,
         },
       });
     }
@@ -178,9 +234,18 @@ export async function PUT(
     });
 
     return NextResponse.json({ success: true, child: updatedChild });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update child error:', error);
-    return NextResponse.json({ error: 'Failed to update child profile' }, { status: 500 });
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Unique constraint conflict occurred while updating child profile.' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update child profile' },
+      { status: 500 }
+    );
   }
 }
 
@@ -201,7 +266,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Child not found' }, { status: 404 });
     }
 
-    // Free bed
+    // Free bed and unlink from child record
     if (child.bedId) {
       await prisma.bed.update({
         where: { id: child.bedId },
@@ -211,7 +276,11 @@ export async function DELETE(
 
     const archived = await prisma.child.update({
       where: { id },
-      data: { status: 'DEACTIVATED' },
+      data: {
+        status: 'DEACTIVATED',
+        bedId: null,
+        roomId: null,
+      },
     });
 
     await logAudit({

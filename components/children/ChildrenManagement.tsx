@@ -176,6 +176,37 @@ export function ChildrenManagement() {
     fetchOptions();
   }, [search, statusFilter]);
 
+  const generateNewAdmissionNo = () => `ADM-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+
+  const handleOpenAddModal = () => {
+    setFormData({
+      fullName: '',
+      fatherGuardianName: '',
+      dateOfBirth: '2015-05-15',
+      gender: 'MALE',
+      bFormNo: '',
+      admissionNo: generateNewAdmissionNo(),
+      admissionDate: new Date().toISOString().split('T')[0],
+      guardianName: '',
+      guardianRelation: 'Mother / Widow',
+      guardianContact: '',
+      address: '',
+      classId: '',
+      bedId: '',
+      motherMaidId: '',
+      bloodGroup: 'B+',
+      allergies: 'None',
+      chronicConditions: 'None',
+      heightCm: '135',
+      weightKg: '30',
+    });
+    setNewPhotoFile(null);
+    setFormError(null);
+    setFormSuccess(null);
+    setShowAddModal(true);
+    fetchOptions();
+  };
+
   const handleCreateChild = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -183,7 +214,19 @@ export function ChildrenManagement() {
     setIsSubmitting(true);
 
     try {
-      const photo = newPhotoFile ? await uploadChildPhoto(newPhotoFile) : null;
+      let photo: string | null = null;
+      let photoUploadWarning: string | null = null;
+
+      if (newPhotoFile) {
+        try {
+          photo = await uploadChildPhoto(newPhotoFile);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown photo upload error';
+          console.error('Profile photo upload failed during child admission:', error);
+          photoUploadWarning = `Profile photo upload could not be completed (${message}). Child record will be saved without the photo until the Vercel Blob token is configured.`;
+        }
+      }
+
       const res = await fetch('/api/children', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,16 +239,21 @@ export function ChildrenManagement() {
         return;
       }
 
-      setFormSuccess('Child enrolled into Sweet Home Multan successfully!');
+      setFormSuccess(
+        photoUploadWarning
+          ? `${photoUploadWarning} Child enrolled into Sweet Home Multan successfully.`
+          : 'Child enrolled into Sweet Home Multan successfully!'
+      );
       setNewPhotoFile(null);
       setTimeout(() => {
         setShowAddModal(false);
         setFormSuccess(null);
         fetchChildren();
-      }, 1500);
-    } catch (err) {
-      console.error(err);
-      setFormError('Network error while saving child admission.');
+        fetchOptions();
+      }, 2200);
+    } catch (err: any) {
+      console.error('Child admission submit error:', err);
+      setFormError(err instanceof Error ? err.message : 'Network error while saving child admission.');
     } finally {
       setIsSubmitting(false);
     }
