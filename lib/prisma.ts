@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const databaseUrl = process.env.DATABASE_URL?.trim()
+  || process.env.POSTGRES_PRISMA_URL?.trim()
+  || process.env.POSTGRES_URL?.trim();
+
+if (databaseUrl && !process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = databaseUrl;
+}
 
 if (!databaseUrl && process.env.NODE_ENV !== 'production') {
   process.env.DATABASE_URL = 'file:./dev.db';
