@@ -125,11 +125,6 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // 4. Authenticated user visiting /login -> Redirect to /dashboard
-  if (isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
   // Root path / redirect to /dashboard
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
