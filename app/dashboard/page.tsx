@@ -51,8 +51,8 @@ export default async function DashboardPage() {
 
   let recentAudits: any[] = [
     { id: 'aud-1', userEmail: user.email, action: 'LOGIN', module: 'AUTH', details: `User ${user.email} authenticated successfully.`, createdAt: new Date() },
-    { id: 'aud-2', userEmail: 'accounts@sweethome.pbm.gov.pk', action: 'CREATE', module: 'PURCHASES', details: 'Created PO-2026-0089 for monthly kitchen ration replenishment.', createdAt: new Date(Date.now() - 3600000 * 3) },
-    { id: 'aud-3', userEmail: 'clerk@sweethome.pbm.gov.pk', action: 'UPDATE', module: 'CHILDREN', details: 'Updated room and bed allocation for orphan admission record.', createdAt: new Date(Date.now() - 3600000 * 6) },
+    { id: 'aud-2', userEmail: 'farkhandabibi1986@gmail.com', action: 'CREATE', module: 'PURCHASES', details: 'Created PO-2026-0089 for monthly kitchen ration replenishment.', createdAt: new Date(Date.now() - 3600000 * 3) },
+    { id: 'aud-3', userEmail: 'umerfarooqpbm5651@gmail.com', action: 'UPDATE', module: 'CHILDREN', details: 'Updated room and bed allocation for orphan admission record.', createdAt: new Date(Date.now() - 3600000 * 6) },
   ];
 
   try {

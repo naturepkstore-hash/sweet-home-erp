@@ -9,20 +9,20 @@ const MODULE_ROLE_ACCESS: Record<string, Role[]> = {
   '/finance': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
   '/expenses': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
   '/purchases': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
-  '/inventory': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.COOK],
-  '/ration': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.COOK],
-  '/mess': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.COOK, Role.COOK_HELPER, Role.WAITER],
-  '/kitchen': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.COOK, Role.COOK_HELPER, Role.WAITER],
+  '/inventory': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/ration': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/mess': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/kitchen': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
   '/settings': [Role.INCHARGE],
   '/audit': [Role.INCHARGE],
-  '/staff': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE],
-  '/employees': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE],
-  '/children': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.CLERK, Role.MOTHER_MAID],
-  '/hostel': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.CLERK],
-  '/education': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.CLERK],
-  '/medical': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/staff': [Role.INCHARGE, Role.HR_REPRESENTATIVE],
+  '/employees': [Role.INCHARGE, Role.HR_REPRESENTATIVE],
+  '/children': [Role.INCHARGE, Role.CLERK],
+  '/hostel': [Role.INCHARGE, Role.CLERK],
+  '/education': [Role.INCHARGE, Role.CLERK],
+  '/medical': [Role.INCHARGE],
   '/reports': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE, Role.CLERK],
-  '/duties': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE],
+  '/duties': [Role.INCHARGE, Role.HR_REPRESENTATIVE, Role.SECURITY_GUARD],
   '/attendance': [
     Role.INCHARGE,
     Role.ACCOUNT_ASSISTANT,
@@ -51,6 +51,23 @@ const MODULE_ROLE_ACCESS: Record<string, Role[]> = {
     Role.DRIVER,
     Role.QARI_QARIA,
   ],
+  '/api/finance': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/api/expenses': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/api/purchases': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/api/inventory': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/api/mess': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT],
+  '/api/hostel': [Role.INCHARGE, Role.CLERK],
+  '/api/medical': [Role.INCHARGE],
+  '/api/settings': [Role.INCHARGE],
+  '/api/audit': [Role.INCHARGE],
+  '/api/staff': [Role.INCHARGE, Role.HR_REPRESENTATIVE],
+  '/api/children': [Role.INCHARGE, Role.CLERK],
+  '/api/education': [Role.INCHARGE, Role.CLERK],
+  '/api/attendance': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE, Role.CLERK],
+  '/api/duties': [Role.INCHARGE, Role.HR_REPRESENTATIVE, Role.SECURITY_GUARD],
+  '/api/duty-assignments': [Role.INCHARGE, Role.HR_REPRESENTATIVE, Role.SECURITY_GUARD],
+  '/api/duty-catalog': [Role.INCHARGE, Role.HR_REPRESENTATIVE, Role.SECURITY_GUARD],
+  '/api/reports': [Role.INCHARGE, Role.ACCOUNT_ASSISTANT, Role.HR_REPRESENTATIVE, Role.CLERK],
 };
 
 function parseJwtPayload(token: string): { role?: Role; userId?: string } | null {
@@ -72,7 +89,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/auth/login') ||
-    pathname.startsWith('/api/auth/quick-switch') ||
+    pathname.startsWith('/api/auth/login-profiles') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();

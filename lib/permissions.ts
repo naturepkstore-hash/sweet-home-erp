@@ -124,22 +124,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<Role, PermissionCode[]> = {
   ],
   ACCOUNT_ASSISTANT: [
     'dashboard.view',
-    'employees.view',
-    'employees.create',
-    'employees.update',
-    'employees.manage_users',
-    'children.view',
-    'children.create',
-    'children.update',
     'attendance.view',
     'attendance.create',
     'attendance.update',
-    'duties.view',
-    'duties.assign',
-    'duties.update',
-    'duties.complete',
-    'duties.archive',
-    'duties.report',
     'inventory.view',
     'inventory.create',
     'inventory.update',
@@ -260,15 +247,9 @@ export function hasModuleAccess(role: Role, module: ERPModule, customPermissions
   if (role === Role.ACCOUNT_ASSISTANT) {
     return [
       'dashboard',
-      'children',
-      'staff',
       'attendance',
-      'duties',
-      'hostel',
-      'education',
       'inventory',
       'mess',
-      'medical',
       'finance',
       'purchases',
       'expenses',
@@ -305,7 +286,7 @@ export function hasModuleAccess(role: Role, module: ERPModule, customPermissions
   }
 
   if (role === Role.SECURITY_GUARD) {
-    return ['dashboard', 'attendance'].includes(module);
+    return ['dashboard', 'attendance', 'duties'].includes(module);
   }
 
   if (role === Role.DRIVER || role === Role.QARI_QARIA) {

@@ -135,7 +135,13 @@ export async function POST(request: Request) {
     if (createAccount) {
       const cleanUsername = username?.trim() || cnic.replace(/[^0-9]/g, '');
       const staffEmail = email?.trim() || `${cleanUsername}@sweethome.pbm.gov.pk`;
-      const plainPassword = password || 'PBM@Staff2026!';
+      if (typeof password !== 'string' || password.length < 12) {
+        return NextResponse.json(
+          { error: 'A password of at least 12 characters is required when creating a login account' },
+          { status: 400 }
+        );
+      }
+      const plainPassword = password;
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
       const existingUser = await prisma.user.findFirst({

@@ -65,7 +65,7 @@ export function StaffManagement() {
     notes: '',
     createAccount: true,
     email: '',
-    password: 'PBM@Staff2026!',
+    password: '',
   });
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -148,7 +148,7 @@ export function StaffManagement() {
           notes: '',
           createAccount: true,
           email: '',
-          password: 'PBM@Staff2026!',
+          password: '',
         });
         fetchStaff();
       }, 1200);

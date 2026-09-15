@@ -1,29 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Lock, User, KeyRound, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loginProfiles, setLoginProfiles] = useState<{ name: string; email: string; role: string }[]>([]);
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeRoleName, setActiveRoleName] = useState<string | null>(null);
 
-  const quickLogins = [
-    { role: 'Incharge (Director)', email: 'incharge@sweethome.pbm.gov.pk', pass: 'PBM@Admin2026!', badge: 'Full Authority' },
-    { role: 'Account Assistant', email: 'accounts@sweethome.pbm.gov.pk', pass: 'PBM@Accounts2026!', badge: 'Full Operations' },
-    { role: 'HR Representative', email: 'hr@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Staff & Duties' },
-    { role: 'Records Clerk', email: 'clerk@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Children & Hostel' },
-    { role: 'Mother Maid 1', email: 'mothermaid1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Assigned Children' },
-    { role: 'Head Cook 1', email: 'cook1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Kitchen & Menu' },
-    { role: 'Cook Helper 1', email: 'cookhelper1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Kitchen Tasks' },
-    { role: 'Waiter 1', email: 'waiter1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Meal Serving' },
-    { role: 'Sweeper 1', email: 'sweeper1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Sanitation' },
-    { role: 'Security Guard 1', email: 'security1@sweethome.pbm.gov.pk', pass: 'PBM@Staff2026!', badge: 'Gate & Shift' },
-  ];
+  useEffect(() => {
+    fetch('/api/auth/login-profiles')
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => setLoginProfiles(data.profiles || []))
+      .catch(() => setLoginProfiles([]));
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +48,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleFillCredentials = (email: string, pass: string, roleName: string) => {
+  const handleFillCredentials = (email: string, roleName: string) => {
     setLoginId(email);
-    setPassword(pass);
+    setPassword('');
     setActiveRoleName(roleName);
     setError(null);
   };
@@ -177,17 +172,17 @@ export default function LoginPage() {
 
             <h3 className="text-lg font-bold text-white mb-2">Select Staff Profile to Test:</h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Click any of the 10 role demonstrators below to automatically load their secure credentials and experience their tailored dashboard:
+              Select one of the five authorized staff profiles. Enter the password issued for that account:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-              {quickLogins.map((item) => {
+              {loginProfiles.map((item) => {
                 const isSelected = activeRoleName === item.role;
                 return (
                   <button
                     key={item.email}
                     type="button"
-                    onClick={() => handleFillCredentials(item.email, item.pass, item.role)}
+                    onClick={() => handleFillCredentials(item.email, item.role)}
                     className={`text-left p-2.5 rounded-lg border transition-all duration-150 cursor-pointer group flex flex-col justify-between ${
                       isSelected
                         ? 'bg-emerald-900/60 border-emerald-400 ring-1 ring-emerald-400'
@@ -196,10 +191,10 @@ export default function LoginPage() {
                   >
                     <div className="flex items-center justify-between">
                       <span className={`font-bold text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-200 group-hover:text-emerald-300'}`}>
-                        {item.role}
+                        {item.name}
                       </span>
                       <span className="text-[9px] bg-slate-700 text-slate-300 group-hover:bg-emerald-800 group-hover:text-emerald-100 px-1.5 py-0.5 rounded font-medium">
-                        {item.badge}
+                        {item.role}
                       </span>
                     </div>
                     <span className="text-[10px] text-slate-400 truncate mt-1">{item.email}</span>
@@ -212,7 +207,7 @@ export default function LoginPage() {
           <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>All 10 staff roles active with discrete RBAC permissions</span>
+              <span>Five authorized staff accounts with discrete RBAC permissions</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

@@ -6,10 +6,16 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting Sweet Home Multan ERP database seed...');
 
-  // 1. Hash default passwords with bcrypt
-  const adminPassword = await bcrypt.hash('PBM@Admin2026!', 10);
-  const accountsPassword = await bcrypt.hash('PBM@Accounts2026!', 10);
-  const staffPassword = await bcrypt.hash('PBM@Staff2026!', 10);
+  // 1. Hash explicitly supplied seed passwords; never keep credentials in source.
+  const adminPlainPassword = process.env.SEED_ADMIN_PASSWORD;
+  const accountsPlainPassword = process.env.SEED_ACCOUNTS_PASSWORD;
+  const staffPlainPassword = process.env.SEED_STAFF_PASSWORD;
+  if (!adminPlainPassword || !accountsPlainPassword || !staffPlainPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD, SEED_ACCOUNTS_PASSWORD, and SEED_STAFF_PASSWORD are required');
+  }
+  const adminPassword = await bcrypt.hash(adminPlainPassword, 10);
+  const accountsPassword = await bcrypt.hash(accountsPlainPassword, 10);
+  const staffPassword = await bcrypt.hash(staffPlainPassword, 10);
 
   // 2. Seed All 10 Role Definitions
   const rolesData = [

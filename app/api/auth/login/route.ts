@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { signSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
-import { findDefaultStaffUser } from '@/lib/default-users';
 
 export async function POST(request: Request) {
   try {
@@ -17,11 +16,8 @@ export async function POST(request: Request) {
     }
 
     const cleanLoginId = loginId.trim();
-    const defaultStaff = findDefaultStaffUser(cleanLoginId);
-
     // 1. Try querying Database for user
     let user: any = null;
-    let dbErrorOccurred = false;
 
     try {
       user = await prisma.user.findFirst({
@@ -35,9 +31,8 @@ export async function POST(request: Request) {
           employee: true,
         },
       });
-    } catch (dbErr) {
-      console.warn('Database query error in login route, attempting fallback authentication:', dbErr);
-      dbErrorOccurred = true;
+    } catch {
+      return NextResponse.json({ error: 'Authentication service unavailable.' }, { status: 503 });
     }
 
     // 2. If user found in database
@@ -49,16 +44,12 @@ export async function POST(request: Request) {
         );
       }
 
-      // Verify password against database hash (or fallback plaintext match for default accounts)
+      // Verify only the bcrypt hash stored for this database user.
       let isMatch = false;
       try {
         isMatch = await bcrypt.compare(password, user.password);
       } catch {
         isMatch = false;
-      }
-
-      if (!isMatch && defaultStaff && password === defaultStaff.passwordPlainText) {
-        isMatch = true;
       }
 
       if (!isMatch) {
@@ -127,55 +118,12 @@ export async function POST(request: Request) {
       return response;
     }
 
-    // 3. Fallback authentication for standard institutional accounts (works when database is offline or unmigrated on Vercel)
-    if (defaultStaff) {
-      if (password === defaultStaff.passwordPlainText || password === 'PBM@Staff2026!' || password === 'PBM@Admin2026!' || password === 'PBM@Accounts2026!') {
-        const token = signSessionToken({
-          userId: defaultStaff.id,
-          email: defaultStaff.email,
-          role: defaultStaff.role,
-          username: defaultStaff.username,
-          fullName: defaultStaff.fullName,
-          employeeId: defaultStaff.employeeId,
-        });
-
-        const response = NextResponse.json({
-          success: true,
-          user: {
-            id: defaultStaff.id,
-            email: defaultStaff.email,
-            username: defaultStaff.username,
-            role: defaultStaff.role,
-            fullName: defaultStaff.fullName,
-          },
-        });
-
-        response.cookies.set({
-          name: SESSION_COOKIE_NAME,
-          value: token,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 60 * 60 * 24 * 7,
-        });
-
-        return response;
-      } else {
-        return NextResponse.json(
-          { error: 'Invalid password. Please check your credentials or click any role button on the right to auto-fill.' },
-          { status: 401 }
-        );
-      }
-    }
-
-    // 4. If user not found in DB and not in default staff
+    // Users must exist in the database and be ACTIVE to authenticate.
     return NextResponse.json(
       { error: 'Staff account not found. Please verify your email or username.' },
       { status: 401 }
     );
-  } catch (error: any) {
-    console.error('Login error details:', error);
+  } catch {
 
     return NextResponse.json(
       { error: 'Authentication failed. Please verify your credentials and try again.' },

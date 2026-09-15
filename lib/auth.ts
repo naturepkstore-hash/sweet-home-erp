@@ -11,7 +11,6 @@ import {
   ROLE_DISPLAY_NAMES,
   ROLE_DEFAULT_PERMISSIONS,
 } from './permissions';
-import { findDefaultStaffUser } from './default-users';
 
 export { type ERPModule, type PermissionCode, hasModuleAccess, hasPermission, ROLE_DISPLAY_NAMES } from './permissions';
 
@@ -102,32 +101,9 @@ export async function getCurrentUser() {
         joiningDate: user.employee?.joiningDate,
       };
     }
-  } catch (error) {
-    console.warn('Database query failed in getCurrentUser, resolving from session payload:', error);
+  } catch {
+    return null;
   }
-
-  // Graceful fallback from verified session token
-  const defaultStaff = findDefaultStaffUser(payload.email) || findDefaultStaffUser(payload.username);
-  const defaultPerms = ROLE_DEFAULT_PERMISSIONS[payload.role] || [];
-
-  return {
-    id: payload.userId || defaultStaff?.id || 'usr-fallback',
-    email: payload.email,
-    username: payload.username,
-    role: payload.role,
-    roleDisplayName: ROLE_DISPLAY_NAMES[payload.role] || payload.role,
-    status: 'ACTIVE',
-    permissions: defaultPerms,
-    employeeId: payload.employeeId || defaultStaff?.employeeId || 'emp-fallback',
-    fullName: payload.fullName || defaultStaff?.fullName || payload.username,
-    fatherHusbandName: 'Institutional Care Staff',
-    cnic: '36302-0000000-1',
-    department: defaultStaff?.department || 'Operations',
-    departmentCode: 'OPS',
-    phoneNumber: '+92 61 9200000',
-    emergencyContact: '+92 61 9200000',
-    joiningDate: new Date('2024-01-01'),
-  };
 }
 
 
