@@ -1,24 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, User, KeyRound, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loginProfiles, setLoginProfiles] = useState<{ name: string; email: string; role: string }[]>([]);
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeRoleName, setActiveRoleName] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('/api/auth/login-profiles')
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data) => setLoginProfiles(data.profiles || []))
-      .catch(() => setLoginProfiles([]));
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,12 +40,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleFillCredentials = (email: string, roleName: string) => {
-    setLoginId(email);
-    setPassword('');
-    setActiveRoleName(roleName);
-    setError(null);
-  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
@@ -106,9 +92,8 @@ export default function LoginPage() {
                     value={loginId}
                     onChange={(e) => {
                       setLoginId(e.target.value);
-                      setActiveRoleName(null);
                     }}
-                    placeholder="e.g. incharge@sweethome.pbm.gov.pk"
+                    placeholder="Enter your registered email"
                     className="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-hidden input-focus-smooth text-slate-900"
                   />
                 </div>
@@ -162,52 +147,19 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Info & Fast Role Selector */}
+        {/* Right Info */}
         <div className="w-full md:w-1/2 bg-slate-900 p-8 sm:p-10 text-white flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-800 animate-fade-in-up stagger-1">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-800/60 w-fit mb-4">
-              <KeyRound className="w-3.5 h-3.5" />
-              <span>Direct Staff Role Demonstrator</span>
-            </div>
-
-            <h3 className="text-lg font-bold text-white mb-2">Select Staff Profile to Test:</h3>
+            <h3 className="text-lg font-bold text-white mb-2">Authorized ERP Access</h3>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Select one of the five authorized staff profiles. Enter the password issued for that account:
+              Use your assigned email address and password to access the ERP panel.
             </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-              {loginProfiles.map((item) => {
-                const isSelected = activeRoleName === item.role;
-                return (
-                  <button
-                    key={item.email}
-                    type="button"
-                    onClick={() => handleFillCredentials(item.email, item.role)}
-                    className={`text-left p-2.5 rounded-lg border transition-all duration-150 cursor-pointer group flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-emerald-900/60 border-emerald-400 ring-1 ring-emerald-400'
-                        : 'bg-slate-800/70 hover:bg-emerald-900/40 border-slate-700/60 hover:border-emerald-500/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`font-bold text-xs ${isSelected ? 'text-emerald-300' : 'text-slate-200 group-hover:text-emerald-300'}`}>
-                        {item.name}
-                      </span>
-                      <span className="text-[9px] bg-slate-700 text-slate-300 group-hover:bg-emerald-800 group-hover:text-emerald-100 px-1.5 py-0.5 rounded font-medium">
-                        {item.role}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 truncate mt-1">{item.email}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Five authorized staff accounts with discrete RBAC permissions</span>
+              <span>Authorized staff accounts with discrete RBAC permissions</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
