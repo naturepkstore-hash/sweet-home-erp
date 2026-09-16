@@ -86,8 +86,9 @@ export default async function DashboardPage() {
     presentStaffToday = staffAttendance;
 
     const activeChildren = await prisma.child.findMany({ where: { status: 'ACTIVE' }, select: { id: true, fullName: true, dateOfBirth: true } });
-    const birthdayScore = (date: Date) => { const now = new Date(); const birthday = new Date(now.getFullYear(), date.getMonth(), date.getDate()); if (birthday < new Date(now.getFullYear(), now.getMonth(), now.getDate())) birthday.setFullYear(now.getFullYear() + 1); return birthday.getTime(); };
-    upcomingBirthdays = activeChildren.sort((a, b) => birthdayScore(a.dateOfBirth) - birthdayScore(b.dateOfBirth)).slice(0, 3);
+    upcomingBirthdays = activeChildren
+      .filter((child) => child.dateOfBirth.getMonth() === new Date().getMonth())
+      .sort((a, b) => a.dateOfBirth.getDate() - b.dateOfBirth.getDate());
 
     const achievements = await prisma.educationRecord.findMany({ include: { child: { select: { fullName: true } } }, orderBy: { obtainedMarks: 'desc' }, take: 3 });
     topAchievements = achievements.map((record) => ({ id: record.id, childName: record.child.fullName, grade: record.grade, obtainedMarks: record.obtainedMarks, totalMarks: record.totalMarks }));
