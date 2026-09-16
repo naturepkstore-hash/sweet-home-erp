@@ -269,6 +269,25 @@ export async function GET(request: Request) {
         }));
         break;
 
+      case 'COMPLAINTS':
+        title = 'Child Complaints & Resolution Register';
+        const complaints = await prisma.childComplaint.findMany({
+          include: { child: { select: { fullName: true, childId: true } } },
+          orderBy: { createdAt: 'desc' },
+        });
+        data = complaints.map((complaint, i) => ({
+          'Sr #': i + 1,
+          'Child Name': complaint.child.fullName,
+          'Child ID': complaint.child.childId,
+          'Category': complaint.category,
+          'Complaint': complaint.description,
+          'Status': complaint.status,
+          'Reported By': complaint.reportedBy || '-',
+          'Reported Date': new Date(complaint.createdAt).toLocaleDateString(),
+          'Resolved Date': complaint.resolvedAt ? new Date(complaint.resolvedAt).toLocaleDateString() : '-',
+        }));
+        break;
+
       case 'MONTHLY':
       case 'YEARLY':
       default:

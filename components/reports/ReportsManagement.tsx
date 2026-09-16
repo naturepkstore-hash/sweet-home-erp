@@ -21,6 +21,7 @@ import {
   HeartPulse,
   DollarSign,
   AlertTriangle,
+  MessageSquareWarning,
 } from 'lucide-react';
 import { exportToExcelFile, exportToCSVFile } from '@/lib/export';
 
@@ -45,8 +46,9 @@ export function ReportsManagement() {
     { id: 'EXPENSES', name: '10. Institutional Expenditure', icon: Receipt, desc: 'Vouchers, utilities, food bills, repairs, and care costs' },
     { id: 'KITCHEN', name: '11. Kitchen Meal Consumption', icon: Utensils, desc: 'Daily meal preparations and total heads served' },
     { id: 'MEDICAL', name: '12. Child Medical & Health Log', icon: HeartPulse, desc: 'Doctor clinical visits, diagnoses, vitals, and prescriptions' },
-    { id: 'MONTHLY', name: '13. Monthly Financial Statement', icon: DollarSign, desc: 'Government grants, expenditures, and NBP bank balance' },
-    { id: 'YEARLY', name: '14. Annual Institutional Audit', icon: FileBarChart, desc: 'Fiscal year operations, admissions, inventory, and expenditures' },
+    { id: 'COMPLAINTS', name: '13. Child Complaints Register', icon: MessageSquareWarning, desc: 'Complaints, reporting staff, status, and resolution dates' },
+    { id: 'MONTHLY', name: '14. Monthly Financial Statement', icon: DollarSign, desc: 'Government grants, expenditures, and NBP bank balance' },
+    { id: 'YEARLY', name: '15. Annual Institutional Audit', icon: FileBarChart, desc: 'Fiscal year operations, admissions, inventory, and expenditures' },
   ];
 
   const fetchReport = async (type: string) => {
