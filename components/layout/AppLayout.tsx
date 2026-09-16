@@ -32,7 +32,21 @@ export async function AppLayout({ children }: { children: React.ReactNode }) {
     const lowStockItems = (await prisma.inventoryItem.findMany({
       select: { id: true, name: true, currentStock: true, minStock: true, unit: true },
     })).filter((item) => item.currentStock <= item.minStock).sort((a, b) => a.currentStock - b.currentStock).slice(0, 5);
+    const activeChildren = await prisma.child.findMany({ where: { status: 'ACTIVE' }, select: { id: true, fullName: true, dateOfBirth: true } });
+    const today = new Date();
+    const birthdayAlerts = activeChildren.filter((child) => {
+      const birthday = new Date(today.getFullYear(), child.dateOfBirth.getMonth(), child.dateOfBirth.getDate());
+      if (birthday < new Date(today.getFullYear(), today.getMonth(), today.getDate())) birthday.setFullYear(today.getFullYear() + 1);
+      return birthday.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    }).slice(0, 3);
     notifications = [
+      ...birthdayAlerts.map((child) => ({
+        id: `birthday-${child.id}`,
+        title: 'Upcoming Birthday',
+        message: `${child.fullName}'s birthday is coming within the next 7 days.`,
+        type: 'SUCCESS',
+        createdAt: new Date(),
+      })),
       ...lowStockItems.map((item) => ({
         id: `stock-${item.id}`,
         title: item.currentStock <= 0 ? 'Stock Empty' : 'Low Stock Alert',
