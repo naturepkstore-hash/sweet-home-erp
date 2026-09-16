@@ -27,6 +27,8 @@ export async function POST(request: Request) {
     const user = await requireAuth();
     if (!user.employeeId) return NextResponse.json({ error: 'No employee profile is linked to this account' }, { status: 400 });
     const body = await request.json();
+    const requestedEmployeeId = managers.includes(user.role) && body.employeeId ? String(body.employeeId) : user.employeeId;
+    if (!requestedEmployeeId) return NextResponse.json({ error: 'Select a staff member for this leave request' }, { status: 400 });
     const leaveType = String(body.leaveType || '').trim();
     const reason = String(body.reason || '').trim();
     const startDate = new Date(body.startDate);
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
     if (!leaveType || !reason || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
       return NextResponse.json({ error: 'Valid leave type, dates, and reason are required' }, { status: 400 });
     }
-    const leave = await prisma.leaveRequest.create({ data: { employeeId: user.employeeId, leaveType, reason, startDate, endDate } });
+    const leave = await prisma.leaveRequest.create({ data: { employeeId: requestedEmployeeId, leaveType, reason, startDate, endDate } });
     await logAudit({ userId: user.id, userEmail: user.email, action: 'CREATE_LEAVE_REQUEST', module: 'STAFF', recordId: leave.id, details: `Submitted ${leaveType} leave request` });
     return NextResponse.json({ success: true, request: leave }, { status: 201 });
   } catch (error) {
