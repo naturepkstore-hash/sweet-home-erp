@@ -596,7 +596,7 @@ async function main() {
       roleName: 'COOK',
       deptCode: 'KITCHEN',
       department: 'Kitchen & Food Preparation',
-      fullName: 'Ustad Abdul Majeed',
+      fullName: 'Mehboob Qader',
       fatherHusbandName: 'Abdul Ghafoor',
       cnic: '36302-7000001-5',
       address: 'Lohari Gate, Old City Multan',
