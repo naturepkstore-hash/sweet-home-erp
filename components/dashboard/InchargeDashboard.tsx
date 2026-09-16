@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { formatPKR, formatDate } from '@/lib/utils';
 import { ComplaintsDashboard, DashboardComplaint } from './ComplaintsDashboard';
+import { DashboardHighlights } from './DashboardHighlights';
 
 interface InchargeDashboardProps {
   stats: {
@@ -63,6 +64,8 @@ interface InchargeDashboardProps {
     categoryName: string;
   }[];
   recentComplaints: DashboardComplaint[];
+  upcomingBirthdays: { id: string; fullName: string; dateOfBirth: Date }[];
+  topAchievements: { id: string; childName: string; grade: string; obtainedMarks: number; totalMarks: number }[];
 }
 
 export function InchargeDashboard({
@@ -71,6 +74,8 @@ export function InchargeDashboard({
   recentAudits,
   lowStockItems,
   recentComplaints,
+  upcomingBirthdays,
+  topAchievements,
 }: InchargeDashboardProps) {
   const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0;
 
@@ -332,6 +337,15 @@ export function InchargeDashboard({
       </div>
 
       <ComplaintsDashboard complaints={recentComplaints} canManage />
+
+      <DashboardHighlights
+        birthdays={upcomingBirthdays}
+        achievements={topAchievements}
+        presentChildren={stats.presentChildrenToday}
+        totalChildren={stats.totalChildren}
+        presentStaff={stats.presentStaffToday}
+        totalStaff={stats.totalStaff}
+      />
 
       {/* Bottom Section: Recent Purchases Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">

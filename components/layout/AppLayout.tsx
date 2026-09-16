@@ -28,6 +28,20 @@ export async function AppLayout({ children }: { children: React.ReactNode }) {
     if (dbNotifications && dbNotifications.length > 0) {
       notifications = dbNotifications;
     }
+
+    const lowStockItems = (await prisma.inventoryItem.findMany({
+      select: { id: true, name: true, currentStock: true, minStock: true, unit: true },
+    })).filter((item) => item.currentStock <= item.minStock).sort((a, b) => a.currentStock - b.currentStock).slice(0, 5);
+    notifications = [
+      ...lowStockItems.map((item) => ({
+        id: `stock-${item.id}`,
+        title: item.currentStock <= 0 ? 'Stock Empty' : 'Low Stock Alert',
+        message: `${item.name} is ${item.currentStock <= 0 ? 'out of stock' : `down to ${item.currentStock} ${item.unit}; minimum is ${item.minStock} ${item.unit}`}.`,
+        type: item.currentStock <= 0 ? 'ALERT' : 'WARNING',
+        createdAt: new Date(),
+      })),
+      ...notifications,
+    ].slice(0, 8);
   } catch (err) {
     console.warn('Could not load notifications from database:', err);
   }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Role } from '@prisma/client';
+import { CommandBar } from './CommandBar';
 
 interface DashboardShellProps {
   user: {
@@ -31,6 +32,7 @@ export function DashboardShell({ user, notifications, children }: DashboardShell
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
+      <CommandBar role={user.role} permissions={user.permissions} />
       {/* Sidebar with mobile drawer state */}
       <Sidebar
         user={user}

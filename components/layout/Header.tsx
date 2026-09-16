@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, ShieldCheck, CheckCircle, AlertTriangle, Menu } from 'lucide-react';
+import { Bell, ShieldCheck, CheckCircle, AlertTriangle, Menu, Moon, Sun } from 'lucide-react';
 import { Role } from '@prisma/client';
 
 interface HeaderProps {
@@ -26,6 +26,7 @@ interface HeaderProps {
 
 export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const todayFormatted = new Date().toLocaleDateString('en-PK', {
     weekday: 'short',
     day: 'numeric',
@@ -33,6 +34,19 @@ export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderP
     year: 'numeric',
   });
   const notificationCount = notifications.length;
+
+  React.useEffect(() => {
+    const saved = window.localStorage.getItem('sweet-home-theme') === 'dark';
+    setDarkMode(saved);
+    document.documentElement.dataset.theme = saved ? 'dark' : 'light';
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    window.localStorage.setItem('sweet-home-theme', next ? 'dark' : 'light');
+    document.documentElement.dataset.theme = next ? 'dark' : 'light';
+  };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 shadow-xs">
@@ -62,6 +76,10 @@ export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderP
         </div>
 
         <div className="h-6 w-px bg-slate-200 hidden lg:block"></div>
+
+        <button onClick={toggleTheme} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all cursor-pointer" aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'} title={darkMode ? 'Light theme' : 'Dark theme'}>
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
 
         {/* Quick Staff Switcher Dropdown */}
         <div className="relative">

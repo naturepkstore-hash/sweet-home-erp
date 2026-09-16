@@ -10,6 +10,7 @@ import { ServiceStaffDashboard } from '@/components/dashboard/ServiceStaffDashbo
 import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { HRClerkDashboard } from '@/components/dashboard/HRClerkDashboard';
 import { DashboardComplaint } from '@/components/dashboard/ComplaintsDashboard';
+import { DashboardHighlights } from '@/components/dashboard/DashboardHighlights';
 
 export default async function DashboardPage() {
   const user = await requireAuth();
@@ -56,6 +57,10 @@ export default async function DashboardPage() {
     { id: 'aud-3', userEmail: 'umerfarooqpbm5651@gmail.com', action: 'UPDATE', module: 'CHILDREN', details: 'Updated room and bed allocation for orphan admission record.', createdAt: new Date(Date.now() - 3600000 * 6) },
   ];
   let recentComplaints: DashboardComplaint[] = [];
+  let presentChildrenToday = 0;
+  let presentStaffToday = 0;
+  let upcomingBirthdays: { id: string; fullName: string; dateOfBirth: Date }[] = [];
+  let topAchievements: { id: string; childName: string; grade: string; obtainedMarks: number; totalMarks: number }[] = [];
 
   try {
     const dbTotalChildren = await prisma.child.count({ where: { status: 'ACTIVE' } });
@@ -68,6 +73,24 @@ export default async function DashboardPage() {
     totalBeds = dbTotalBeds || totalBeds;
     occupiedBeds = dbOccupiedBeds || occupiedBeds;
     vacantBeds = Math.max(0, totalBeds - occupiedBeds);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(todayStart);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const [childAttendance, staffAttendance] = await Promise.all([
+      prisma.attendance.count({ where: { type: 'CHILD', date: { gte: todayStart, lt: tomorrow }, status: 'PRESENT' } }),
+      prisma.attendance.count({ where: { type: 'EMPLOYEE', date: { gte: todayStart, lt: tomorrow }, status: 'PRESENT' } }),
+    ]);
+    presentChildrenToday = childAttendance;
+    presentStaffToday = staffAttendance;
+
+    const activeChildren = await prisma.child.findMany({ where: { status: 'ACTIVE' }, select: { id: true, fullName: true, dateOfBirth: true } });
+    const birthdayScore = (date: Date) => { const now = new Date(); const birthday = new Date(now.getFullYear(), date.getMonth(), date.getDate()); if (birthday < new Date(now.getFullYear(), now.getMonth(), now.getDate())) birthday.setFullYear(now.getFullYear() + 1); return birthday.getTime(); };
+    upcomingBirthdays = activeChildren.sort((a, b) => birthdayScore(a.dateOfBirth) - birthdayScore(b.dateOfBirth)).slice(0, 3);
+
+    const achievements = await prisma.educationRecord.findMany({ include: { child: { select: { fullName: true } } }, orderBy: { obtainedMarks: 'desc' }, take: 3 });
+    topAchievements = achievements.map((record) => ({ id: record.id, childName: record.child.fullName, grade: record.grade, obtainedMarks: record.obtainedMarks, totalMarks: record.totalMarks }));
 
     const dbInventoryItems = await prisma.inventoryItem.findMany({
       include: { category: true },
@@ -169,8 +192,8 @@ export default async function DashboardPage() {
           stats={{
             totalChildren,
             totalStaff,
-            presentChildrenToday: totalChildren,
-            presentStaffToday: totalStaff,
+            presentChildrenToday,
+            presentStaffToday,
             totalBeds,
             occupiedBeds,
             vacantBeds,
@@ -183,6 +206,8 @@ export default async function DashboardPage() {
           recentAudits={recentAudits}
           lowStockItems={lowStockItems}
           recentComplaints={recentComplaints}
+          upcomingBirthdays={upcomingBirthdays}
+          topAchievements={topAchievements}
         />
       )}
 
