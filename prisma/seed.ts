@@ -328,7 +328,7 @@ async function main() {
   const staffList = [
     // 1. Incharge (1)
     {
-      username: 'incharge',
+      username: 'farah.malik',
       email: 'farah786rao@gmail.com',
       password: adminPassword,
       role: Role.INCHARGE,
@@ -346,7 +346,7 @@ async function main() {
     },
     // 2. Account Assistant (1)
     {
-      username: 'accounts',
+      username: 'farkhanda.bibi',
       email: 'farkhandabibi1986@gmail.com',
       password: accountsPassword,
       role: Role.ACCOUNT_ASSISTANT,
@@ -364,7 +364,7 @@ async function main() {
     },
     // 3. HR / Representative (1)
     {
-      username: 'hr',
+      username: 'tehmina.mehr',
       email: 'tehminamehr341@gmail.com',
       password: staffPassword,
       role: Role.HR_REPRESENTATIVE,
@@ -382,7 +382,7 @@ async function main() {
     },
     // 4. Clerk (1)
     {
-      username: 'clerk',
+      username: 'umer.farooq',
       email: 'umerfarooqpbm5651@gmail.com',
       password: staffPassword,
       role: Role.CLERK,
