@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { formatDate } from '@/lib/utils';
 import { childPhotoDisplaySrc } from '@/lib/child-photo';
 import { ChildComplaintsSection } from '@/components/children/ChildComplaintsSection';
+import { ChildDocumentsSection } from '@/components/children/ChildDocumentsSection';
 
 function calculateAge(dateOfBirth: Date) {
   const today = new Date();
@@ -39,6 +40,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
         educationRecords: { include: { class: true }, orderBy: { createdAt: 'desc' }, take: 5 },
         attendances: { orderBy: { date: 'desc' }, take: 10 },
         complaints: { orderBy: { createdAt: 'desc' }, take: 20 },
+        documents: { orderBy: { uploadedAt: 'desc' } },
       },
     });
   } catch (err) {
@@ -66,6 +68,10 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
     <ChildComplaintsSection
       childId={child.id}
       canManage={user.role === Role.INCHARGE || user.role === Role.ACCOUNT_ASSISTANT}
+    />
+    <ChildDocumentsSection
+      childId={child.id}
+      canManage={user.role === Role.INCHARGE || user.role === Role.ACCOUNT_ASSISTANT || user.role === Role.CLERK}
     />
   </div></AppLayout>;
 }
