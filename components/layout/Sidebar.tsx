@@ -25,6 +25,7 @@ import {
   Shield,
   X,
   CalendarDays,
+  Banknote,
 } from 'lucide-react';
 import { Role } from '@prisma/client';
 import { hasModuleAccess, ERPModule, ROLE_DISPLAY_NAMES } from '@/lib/permissions';
@@ -60,6 +61,7 @@ export function Sidebar({ user, isOpen = false, onClose }: SidebarProps) {
     { name: 'Children Management', href: '/children', module: 'children', icon: Baby },
     { name: 'Staff & HR', href: '/staff', module: 'staff', icon: Users },
     { name: 'Leave Management', href: '/leave', module: 'leave', icon: CalendarDays },
+    { name: 'Payroll & Salary', href: '/payroll', module: 'payroll', icon: Banknote },
     { name: 'Attendance', href: '/attendance', module: 'attendance', icon: UserCheck },
     { name: 'Duty Assignment', href: '/duties', module: 'duties', icon: ClipboardList },
     { name: 'Hostel Management', href: '/hostel', module: 'hostel', icon: Building2 },

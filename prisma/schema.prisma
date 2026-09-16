@@ -118,6 +118,43 @@ model Employee {
   financeTxns        FinanceTransaction[]
   leaveRequests      LeaveRequest[]
   approvedLeaves     LeaveRequest[]      @relation("LeaveApprovedBy")
+  salaryStructures   SalaryStructure[]
+  payrollEntries     PayrollEntry[]
+}
+
+model SalaryStructure {
+  id            String   @id @default(cuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  basicSalary   Float    @default(0)
+  allowances    Float    @default(0)
+  deductions    Float    @default(0)
+  effectiveFrom DateTime @default(now())
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([employeeId, active])
+}
+
+model PayrollEntry {
+  id             String   @id @default(cuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payrollMonth   String
+  basicSalary    Float
+  allowances     Float
+  deductions     Float
+  leaveDeduction Float    @default(0)
+  netSalary      Float
+  status         String   @default("DRAFT") // DRAFT, APPROVED, PAID
+  paidAt         DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([employeeId, payrollMonth])
+  @@index([payrollMonth, status])
 }
 
 model LeaveRequest {

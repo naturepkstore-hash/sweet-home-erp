@@ -11,6 +11,7 @@ const commands: { name: string; href: string; module: ERPModule; keywords: strin
   { name: 'Children Management', href: '/children', module: 'children', keywords: 'child profile admission complaint' },
   { name: 'Staff & HR', href: '/staff', module: 'staff', keywords: 'employees workers' },
   { name: 'Leave Management', href: '/leave', module: 'leave', keywords: 'holiday sick absence request approval' },
+  { name: 'Payroll & Salary', href: '/payroll', module: 'payroll', keywords: 'salary payslip wages deductions payment' },
   { name: 'Attendance', href: '/attendance', module: 'attendance', keywords: 'present absent daily' },
   { name: 'Duty Assignment', href: '/duties', module: 'duties', keywords: 'roster shift task' },
   { name: 'Inventory & Ration', href: '/inventory', module: 'inventory', keywords: 'stock items low empty' },

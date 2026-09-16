@@ -5,6 +5,7 @@ export type ERPModule =
   | 'children'
   | 'staff'
   | 'leave'
+  | 'payroll'
   | 'attendance'
   | 'duties'
   | 'hostel'
@@ -255,6 +256,7 @@ export function hasModuleAccess(role: Role, module: ERPModule, customPermissions
       'purchases',
       'expenses',
       'leave',
+      'payroll',
       'reports',
     ].includes(module);
   }
