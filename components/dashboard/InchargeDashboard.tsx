@@ -20,6 +20,7 @@ import {
 import { formatPKR, formatDate } from '@/lib/utils';
 import { ComplaintsDashboard, DashboardComplaint } from './ComplaintsDashboard';
 import { DashboardHighlights } from './DashboardHighlights';
+import { DashboardCharts } from './DashboardCharts';
 
 interface InchargeDashboardProps {
   stats: {
@@ -66,6 +67,7 @@ interface InchargeDashboardProps {
   recentComplaints: DashboardComplaint[];
   upcomingBirthdays: { id: string; fullName: string; dateOfBirth: Date }[];
   topAchievements: { id: string; childName: string; grade: string; obtainedMarks: number; totalMarks: number }[];
+  expenseTrend: { label: string; amount: number }[];
 }
 
 export function InchargeDashboard({
@@ -76,6 +78,7 @@ export function InchargeDashboard({
   recentComplaints,
   upcomingBirthdays,
   topAchievements,
+  expenseTrend,
 }: InchargeDashboardProps) {
   const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0;
 
@@ -341,6 +344,14 @@ export function InchargeDashboard({
       <DashboardHighlights
         birthdays={upcomingBirthdays}
         achievements={topAchievements}
+        presentChildren={stats.presentChildrenToday}
+        totalChildren={stats.totalChildren}
+        presentStaff={stats.presentStaffToday}
+        totalStaff={stats.totalStaff}
+      />
+
+      <DashboardCharts
+        expenses={expenseTrend}
         presentChildren={stats.presentChildrenToday}
         totalChildren={stats.totalChildren}
         presentStaff={stats.presentStaffToday}

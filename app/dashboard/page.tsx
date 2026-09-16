@@ -11,6 +11,7 @@ import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { HRClerkDashboard } from '@/components/dashboard/HRClerkDashboard';
 import { DashboardComplaint } from '@/components/dashboard/ComplaintsDashboard';
 import { DashboardHighlights } from '@/components/dashboard/DashboardHighlights';
+import { DashboardCharts } from '@/components/dashboard/DashboardCharts';
 
 export default async function DashboardPage() {
   const user = await requireAuth();
@@ -61,6 +62,7 @@ export default async function DashboardPage() {
   let presentStaffToday = 0;
   let upcomingBirthdays: { id: string; fullName: string; dateOfBirth: Date }[] = [];
   let topAchievements: { id: string; childName: string; grade: string; obtainedMarks: number; totalMarks: number }[] = [];
+  let expenseTrend: { label: string; amount: number }[] = [];
 
   try {
     const dbTotalChildren = await prisma.child.count({ where: { status: 'ACTIVE' } });
@@ -138,6 +140,12 @@ export default async function DashboardPage() {
     if (monthlyExpensesAgg._sum.amount !== null && monthlyExpensesAgg._sum.amount !== undefined) {
       monthlyExpenses = monthlyExpensesAgg._sum.amount;
     }
+    for (let offset = 5; offset >= 0; offset -= 1) {
+      const trendStart = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() - offset, 1);
+      const trendEnd = new Date(trendStart.getFullYear(), trendStart.getMonth() + 1, 1);
+      const trend = await prisma.financeTransaction.aggregate({ where: { type: 'EXPENSE', date: { gte: trendStart, lt: trendEnd } }, _sum: { amount: true } });
+      expenseTrend.push({ label: trendStart.toLocaleDateString('en-PK', { month: 'short' }), amount: trend._sum.amount || 0 });
+    }
 
     const recentPurchasesRaw = await prisma.purchase.findMany({
       include: { supplier: true },
@@ -209,6 +217,7 @@ export default async function DashboardPage() {
           recentComplaints={recentComplaints}
           upcomingBirthdays={upcomingBirthdays}
           topAchievements={topAchievements}
+          expenseTrend={expenseTrend}
         />
       )}
 
