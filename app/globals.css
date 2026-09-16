@@ -145,6 +145,11 @@ body {
   50% { opacity: 1; transform: scale(1.08); }
 }
 
+@keyframes brandSpin {
+  from { rotate: -18deg; }
+  to { rotate: 342deg; }
+}
+
 @keyframes brandProgress {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
@@ -158,6 +163,22 @@ body {
 @keyframes brandIntroShell {
   0%, 78% { opacity: 1; }
   100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes brandGridMove {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 28px, 0); }
+}
+
+@keyframes brandScan {
+  0% { opacity: 0; transform: translateY(-42vh); }
+  30%, 70% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(42vh); }
+}
+
+@keyframes brandCopyReveal {
+  from { opacity: 0; transform: translateY(14px); letter-spacing: 0.18em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: normal; }
 }
 
 /* Animation Utility Classes */
@@ -194,7 +215,7 @@ body {
 }
 
 .brand-mark-ring {
-  animation: brandRingPulse 1200ms ease-in-out 120ms infinite;
+  animation: brandRingPulse 1200ms ease-in-out 120ms infinite, brandSpin 2200ms linear 120ms both;
 }
 
 .brand-mark-glow {
@@ -204,6 +225,17 @@ body {
 .brand-progress {
   animation: brandProgress 2200ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
 }
+
+.brand-intro-grid {
+  opacity: 0.18;
+  background-image: linear-gradient(rgba(16, 185, 129, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.2) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: brandGridMove 2200ms linear infinite;
+}
+
+.brand-scan { animation: brandScan 2300ms cubic-bezier(0.16, 1, 0.3, 1) both; box-shadow: 0 0 24px rgba(110, 231, 183, 0.8); }
+.brand-copy-reveal { animation: brandCopyReveal 650ms cubic-bezier(0.16, 1, 0.3, 1) 600ms both; }
+.brand-status-reveal { animation: fadeIn 400ms ease 1250ms both; }
 
 .brand-intro-shell {
   animation: brandIntroShell 2600ms cubic-bezier(0.16, 1, 0.3, 1) both;

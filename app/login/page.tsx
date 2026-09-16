@@ -12,19 +12,23 @@ function BrandIntro({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="brand-intro-shell fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950 text-white" role="status" aria-label="Loading Sweet Home Multan ERP">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.16),transparent_42%)]" />
+      <div className="brand-intro-grid absolute inset-0" />
+      <div className="brand-scan absolute left-0 right-0 top-1/2 h-px bg-emerald-300/60" />
+      <div className="absolute left-6 top-6 text-[9px] font-bold tracking-[0.35em] text-emerald-300/70">PBM // SHM // 2026</div>
+      <div className="absolute bottom-6 right-6 text-right text-[9px] font-bold tracking-[0.25em] text-slate-500">SECURE OPERATIONS<br /><span className="text-emerald-400">SYSTEM READY</span></div>
       <div className="relative flex flex-col items-center">
         <div className="brand-mark-reveal relative flex h-36 w-36 items-center justify-center rounded-full bg-white/10 shadow-[0_0_80px_rgba(16,185,129,0.25)]">
           <div className="brand-mark-ring absolute inset-[-16px] rounded-full border border-amber-300/60" />
           <div className="brand-mark-glow absolute inset-2 rounded-full border border-emerald-300/30" />
           <img src="/pbm-sweet-home-logo.svg" alt="PBM Sweet Home logo" className="relative h-32 w-32 rounded-full" />
         </div>
-        <div className="mt-8 text-center animate-fade-in-up stagger-2">
+        <div className="brand-copy-reveal mt-8 text-center">
           <p className="text-[11px] font-bold tracking-[0.28em] text-emerald-300">PAKISTAN BAIT-UL-MAAL</p>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight">Sweet Home Multan</h1>
           <p className="mt-2 text-xs text-slate-400">Institutional Operations ERP</p>
         </div>
-        <div className="mt-8 h-1 w-32 overflow-hidden rounded-full bg-white/10"><div className="brand-progress h-full rounded-full bg-amber-300" /></div>
+        <div className="brand-status-reveal mt-8 flex items-center gap-3 text-[9px] font-bold tracking-[0.22em] text-slate-500"><span className="h-px w-8 bg-emerald-400/60" />AUTHENTICATING<span className="h-px w-8 bg-emerald-400/60" /></div>
+        <div className="mt-3 h-1 w-40 overflow-hidden rounded-full bg-white/10"><div className="brand-progress h-full rounded-full bg-amber-300" /></div>
       </div>
     </div>
   );
