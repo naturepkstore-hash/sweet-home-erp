@@ -197,6 +197,16 @@ export function InchargeDashboard({
         </div>
       </div>
 
+      <div className="animate-fade-in-up stagger-4">
+        <DashboardCharts
+          expenses={expenseTrend}
+          presentChildren={stats.presentChildrenToday}
+          totalChildren={stats.totalChildren}
+          presentStaff={stats.presentStaffToday}
+          totalStaff={stats.totalStaff}
+        />
+      </div>
+
       {/* Middle Grid: Today's Menu + Low Stock Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -350,13 +360,6 @@ export function InchargeDashboard({
         totalStaff={stats.totalStaff}
       />
 
-      <DashboardCharts
-        expenses={expenseTrend}
-        presentChildren={stats.presentChildrenToday}
-        totalChildren={stats.totalChildren}
-        presentStaff={stats.presentStaffToday}
-        totalStaff={stats.totalStaff}
-      />
 
       {/* Bottom Section: Recent Purchases Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
