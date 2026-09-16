@@ -6,12 +6,12 @@ import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucid
 
 function BrandIntro({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
-    const timer = window.setTimeout(onComplete, 1600);
+    const timer = window.setTimeout(onComplete, 2600);
     return () => window.clearTimeout(timer);
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950 text-white animate-fade-in" role="status" aria-label="Loading Sweet Home Multan ERP">
+    <div className="brand-intro-shell fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950 text-white" role="status" aria-label="Loading Sweet Home Multan ERP">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.16),transparent_42%)]" />
       <div className="relative flex flex-col items-center">
         <div className="brand-mark-reveal relative flex h-36 w-36 items-center justify-center rounded-full bg-white/10 shadow-[0_0_80px_rgba(16,185,129,0.25)]">
@@ -39,7 +39,7 @@ export default function LoginPage() {
   const [showBrandIntro, setShowBrandIntro] = useState(true);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowBrandIntro(false), 1600);
+    const timer = window.setTimeout(() => setShowBrandIntro(false), 2600);
     return () => window.clearTimeout(timer);
   }, []);
 
