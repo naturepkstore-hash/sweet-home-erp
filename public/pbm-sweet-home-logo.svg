@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="seal" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 236) rotate(90) scale(248)">
+      <stop stop-color="#FFFDF0"/>
+      <stop offset="0.78" stop-color="#FFF7C7"/>
+      <stop offset="1" stop-color="#D4A72C"/>
+    </radialGradient>
+    <linearGradient id="house" x1="150" y1="130" x2="362" y2="405" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8BD338"/>
+      <stop offset="1" stop-color="#2D9D3C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="244" fill="url(#seal)" stroke="#D4A72C" stroke-width="10"/>
+  <circle cx="256" cy="256" r="222" stroke="#E7C85B" stroke-width="3" opacity=".75"/>
+  <path d="M166 152L256 91L346 152V386H166V152Z" fill="url(#house)"/>
+  <path d="M143 166L256 75L369 166" stroke="#278B37" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M211 135H301V202H211V135Z" fill="#F9FFF0"/>
+  <path d="M256 135V202M211 168.5H301" stroke="#56B73F" stroke-width="9"/>
+  <circle cx="207" cy="247" r="17" fill="#301A8E"/>
+  <path d="M207 269C180 269 164 288 164 314V342H250V314C250 288 234 269 207 269Z" fill="#301A8E"/>
+  <path d="M187 300L148 274" stroke="#301A8E" stroke-width="15" stroke-linecap="round"/>
+  <path d="M228 300L263 269" stroke="#301A8E" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="303" cy="242" r="17" fill="#301A8E"/>
+  <path d="M303 264C276 264 260 283 260 309V342H346V309C346 283 330 264 303 264Z" fill="#301A8E"/>
+  <path d="M282 296L250 270" stroke="#301A8E" stroke-width="15" stroke-linecap="round"/>
+  <path d="M324 296L359 270" stroke="#301A8E" stroke-width="15" stroke-linecap="round"/>
+  <path d="M153 362H359" stroke="#F9FFF0" stroke-width="7" stroke-linecap="round"/>
+  <text x="256" y="365" text-anchor="middle" fill="#F9FFF0" font-family="Arial, sans-serif" font-size="25" font-weight="800">PBM</text>
+  <text x="256" y="400" text-anchor="middle" fill="#301A8E" font-family="Arial, sans-serif" font-size="30" font-weight="800">Sweet Home</text>
+</svg>

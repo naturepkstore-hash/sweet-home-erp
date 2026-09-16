@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2, Home } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 function BrandIntro({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
@@ -14,10 +14,10 @@ function BrandIntro({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950 text-white animate-fade-in" role="status" aria-label="Loading Sweet Home Multan ERP">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.16),transparent_42%)]" />
       <div className="relative flex flex-col items-center">
-        <div className="brand-mark-reveal relative flex h-28 w-28 items-center justify-center rounded-[2rem] border border-emerald-300/30 bg-emerald-700 shadow-[0_0_70px_rgba(16,185,129,0.24)]">
-          <div className="brand-mark-ring absolute inset-[-14px] rounded-[2.5rem] border border-amber-300/50" />
-          <Shield className="h-16 w-16 text-white" strokeWidth={1.4} />
-          <Home className="absolute h-7 w-7 text-amber-300" strokeWidth={2.2} />
+        <div className="brand-mark-reveal relative flex h-36 w-36 items-center justify-center rounded-full bg-white/10 shadow-[0_0_80px_rgba(16,185,129,0.25)]">
+          <div className="brand-mark-ring absolute inset-[-16px] rounded-full border border-amber-300/60" />
+          <div className="brand-mark-glow absolute inset-2 rounded-full border border-emerald-300/30" />
+          <img src="/pbm-sweet-home-logo.svg" alt="PBM Sweet Home logo" className="relative h-32 w-32 rounded-full" />
         </div>
         <div className="mt-8 text-center animate-fade-in-up stagger-2">
           <p className="text-[11px] font-bold tracking-[0.28em] text-emerald-300">PAKISTAN BAIT-UL-MAAL</p>
