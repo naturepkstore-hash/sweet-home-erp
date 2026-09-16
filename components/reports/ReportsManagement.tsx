@@ -31,6 +31,7 @@ export function ReportsManagement() {
   const [reportData, setReportData] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [attendanceMonth, setAttendanceMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const reportOptions = [
     { id: 'CHILDREN', name: '1. Children Directory & Dossiers', icon: Baby, desc: 'Complete biometrics, B-form, hostel beds, classes, and care assignments' },
@@ -54,7 +55,8 @@ export function ReportsManagement() {
   const fetchReport = async (type: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reports?type=${type}`);
+      const query = type === 'ATTENDANCE' ? `&month=${attendanceMonth}` : '';
+      const res = await fetch(`/api/reports?type=${type}${query}`);
       const data = await res.json();
       if (data.success) {
         setReportData(data.data || []);
@@ -69,7 +71,7 @@ export function ReportsManagement() {
 
   useEffect(() => {
     fetchReport(selectedReport);
-  }, [selectedReport]);
+  }, [selectedReport, attendanceMonth]);
 
   const handleSelectReport = (type: string) => {
     setSelectedReport(type);
@@ -191,9 +193,9 @@ export function ReportsManagement() {
 
         {/* Search within Report (No Print) */}
         <div className="flex justify-between items-center mb-4 no-print">
-          <span className="text-xs font-bold text-slate-600">
+          <div className="flex items-center gap-3"><span className="text-xs font-bold text-slate-600">
             Showing {filteredData.length} Records
-          </span>
+          </span>{selectedReport === 'ATTENDANCE' && <label className="flex items-center gap-1 text-[10px] font-bold text-slate-500">Month<input type="month" value={attendanceMonth} onChange={(event) => setAttendanceMonth(event.target.value)} className="rounded-md border border-slate-300 px-2 py-1 text-xs font-normal" /></label>}</div>
           <div className="w-64 relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
             <input

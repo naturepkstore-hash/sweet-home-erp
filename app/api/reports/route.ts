@@ -67,14 +67,17 @@ export async function GET(request: Request) {
         break;
 
       case 'ATTENDANCE':
-        title = 'Daily Institutional Attendance Record';
+        const month = searchParams.get('month');
+        const monthStart = month ? new Date(`${month}-01T00:00:00`) : undefined;
+        const monthEnd = monthStart ? new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1) : undefined;
+        title = month ? `Institutional Attendance Report - ${month}` : 'Daily Institutional Attendance Record';
         const attendances = await prisma.attendance.findMany({
+          where: monthStart && monthEnd ? { date: { gte: monthStart, lt: monthEnd } } : undefined,
           include: {
             child: { select: { fullName: true, childId: true } },
             employee: { select: { fullName: true, role: true } },
           },
           orderBy: { date: 'desc' },
-          take: 100,
         });
         data = attendances.map((a, i) => ({
           'Sr #': i + 1,
