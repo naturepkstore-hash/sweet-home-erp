@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Shield,
   X,
+  CalendarDays,
 } from 'lucide-react';
 import { Role } from '@prisma/client';
 import { hasModuleAccess, ERPModule, ROLE_DISPLAY_NAMES } from '@/lib/permissions';
@@ -58,6 +59,7 @@ export function Sidebar({ user, isOpen = false, onClose }: SidebarProps) {
     { name: 'Dashboard', href: '/dashboard', module: 'dashboard', icon: LayoutDashboard },
     { name: 'Children Management', href: '/children', module: 'children', icon: Baby },
     { name: 'Staff & HR', href: '/staff', module: 'staff', icon: Users },
+    { name: 'Leave Management', href: '/leave', module: 'leave', icon: CalendarDays },
     { name: 'Attendance', href: '/attendance', module: 'attendance', icon: UserCheck },
     { name: 'Duty Assignment', href: '/duties', module: 'duties', icon: ClipboardList },
     { name: 'Hostel Management', href: '/hostel', module: 'hostel', icon: Building2 },

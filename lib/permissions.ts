@@ -4,6 +4,7 @@ export type ERPModule =
   | 'dashboard'
   | 'children'
   | 'staff'
+  | 'leave'
   | 'attendance'
   | 'duties'
   | 'hostel'
@@ -253,44 +254,45 @@ export function hasModuleAccess(role: Role, module: ERPModule, customPermissions
       'finance',
       'purchases',
       'expenses',
+      'leave',
       'reports',
     ].includes(module);
   }
 
   if (role === Role.HR_REPRESENTATIVE) {
-    return ['dashboard', 'staff', 'attendance', 'duties', 'reports'].includes(module);
+    return ['dashboard', 'staff', 'leave', 'attendance', 'duties', 'reports'].includes(module);
   }
 
   if (role === Role.CLERK) {
-    return ['dashboard', 'children', 'attendance', 'hostel', 'education', 'reports'].includes(module);
+    return ['dashboard', 'children', 'leave', 'attendance', 'hostel', 'education', 'reports'].includes(module);
   }
 
   if (role === Role.MOTHER_MAID) {
-    return ['dashboard', 'children', 'attendance'].includes(module);
+    return ['dashboard', 'children', 'leave', 'attendance'].includes(module);
   }
 
   if (role === Role.WAITER) {
-    return ['dashboard', 'mess', 'attendance'].includes(module);
+    return ['dashboard', 'mess', 'leave', 'attendance'].includes(module);
   }
 
   if (role === Role.COOK) {
-    return ['dashboard', 'mess', 'inventory', 'attendance'].includes(module);
+    return ['dashboard', 'mess', 'inventory', 'leave', 'attendance'].includes(module);
   }
 
   if (role === Role.COOK_HELPER) {
-    return ['dashboard', 'mess', 'attendance'].includes(module);
+    return ['dashboard', 'mess', 'leave', 'attendance'].includes(module);
   }
 
   if (role === Role.SWEEPER) {
-    return ['dashboard', 'attendance'].includes(module);
+    return ['dashboard', 'leave', 'attendance'].includes(module);
   }
 
   if (role === Role.SECURITY_GUARD) {
-    return ['dashboard', 'attendance', 'duties'].includes(module);
+    return ['dashboard', 'leave', 'attendance', 'duties'].includes(module);
   }
 
   if (role === Role.DRIVER || role === Role.QARI_QARIA) {
-    return ['dashboard', 'attendance'].includes(module);
+    return ['dashboard', 'leave', 'attendance'].includes(module);
   }
 
   return false;
