@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { formatDate } from '@/lib/utils';
 import { childPhotoDisplaySrc } from '@/lib/child-photo';
+import { ChildComplaintsSection } from '@/components/children/ChildComplaintsSection';
 
 function calculateAge(dateOfBirth: Date) {
   const today = new Date();
@@ -37,6 +38,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
         medicalVisits: { orderBy: { visitDate: 'desc' }, take: 5 },
         educationRecords: { include: { class: true }, orderBy: { createdAt: 'desc' }, take: 5 },
         attendances: { orderBy: { date: 'desc' }, take: 10 },
+        complaints: { orderBy: { createdAt: 'desc' }, take: 20 },
       },
     });
   } catch (err) {
@@ -61,5 +63,6 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3"><Section label="MED" title="Medical Summary" tone="red">{child.medicalRecord ? <dl className="space-y-2 text-xs"><div className="flex justify-between"><dt className="text-slate-500">Blood Group</dt><dd className="font-bold text-red-800">{child.medicalRecord.bloodGroup || 'Not recorded'}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Allergies</dt><dd className="font-semibold">{child.medicalRecord.allergies || 'None recorded'}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Height</dt><dd className="font-semibold">{child.medicalRecord.heightCm ? `${child.medicalRecord.heightCm} cm` : 'Not recorded'}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Weight</dt><dd className="font-semibold">{child.medicalRecord.weightKg ? `${child.medicalRecord.weightKg} kg` : 'Not recorded'}</dd></div></dl> : <p className="text-xs text-slate-500">No medical profile recorded.</p>}<Link href={`/medical?childId=${child.id}`} className="mt-4 inline-block text-xs font-bold text-red-700">Open Medical Module</Link></Section><Section label="EDU" title="Education Summary">{child.educationRecords.length ? <div className="space-y-2 text-xs">{child.educationRecords.map((record) => <div key={record.id} className="flex items-center justify-between border-b border-slate-100 pb-2"><span><strong>{record.examTerm}</strong><span className="block text-slate-500">{record.academicYear}</span></span><span className="font-bold text-blue-800">{record.grade} · {record.obtainedMarks}/{record.totalMarks}</span></div>)}</div> : <p className="text-xs text-slate-500">No academic records recorded.</p>}<Link href={`/education?childId=${child.id}`} className="mt-4 inline-block text-xs font-bold text-blue-700">Open Education Module</Link></Section><Section label="ATT" title="Attendance Summary"><div className="text-3xl font-extrabold text-emerald-800">{attendancePresent}<span className="ml-1 text-xs font-semibold text-slate-400">present recently</span></div><p className="mt-2 text-xs text-slate-500">Showing the latest {child.attendances.length} attendance records.</p><Link href={`/attendance?childId=${child.id}`} className="mt-4 inline-block text-xs font-bold text-amber-700">Open Attendance Module</Link></Section></div>
 
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2"><Section label="VIS" title="Recent Medical Visits">{child.medicalVisits.length ? <div className="space-y-2 text-xs">{child.medicalVisits.map((visit) => <div key={visit.id} className="border-b border-slate-100 pb-2"><div className="flex justify-between font-bold"><span>{visit.diagnosis}</span><span className="text-slate-400">{formatDate(visit.visitDate)}</span></div><div className="text-slate-500">Dr. {visit.doctorName} · {visit.treatment || 'No treatment recorded'}</div></div>)}</div> : <p className="text-xs text-slate-500">No medical visits recorded.</p>}</Section><Section label="INFO" title="Psychological & Exit Records"><p className="text-xs text-slate-500">Psychological examination and withdrawal/exit records are not implemented in the current ERP schema.</p></Section></div>
+    <ChildComplaintsSection childId={child.id} />
   </div></AppLayout>;
 }

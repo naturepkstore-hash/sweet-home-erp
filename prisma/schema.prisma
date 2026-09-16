@@ -152,6 +152,22 @@ model Child {
   medicalRecord      MedicalRecord?
   medicalVisits      MedicalVisit[]
   educationRecords   EducationRecord[]
+  complaints         ChildComplaint[]
+}
+
+model ChildComplaint {
+  id          String   @id @default(cuid())
+  childId     String
+  child       Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  category    String
+  description String
+  status      String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
+  reportedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([childId, createdAt])
 }
 
 model ChildDocument {
