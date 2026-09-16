@@ -32,6 +32,7 @@ export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderP
     month: 'short',
     year: 'numeric',
   });
+  const notificationCount = notifications.length;
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 shadow-xs">
@@ -83,9 +84,11 @@ export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderP
             }}
             className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg relative transition-all cursor-pointer"
             aria-label="Notifications"
+            aria-expanded={showNotifications}
+            aria-haspopup="menu"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white animate-pulse"></span>
+            {notificationCount > 0 && <span className="absolute top-1 right-1 min-w-4 h-4 px-1 bg-amber-500 text-white rounded-full ring-2 ring-white text-[9px] font-bold leading-4 text-center animate-scale-in">{notificationCount > 9 ? '9+' : notificationCount}</span>}
           </button>
 
           {showNotifications && (
@@ -94,21 +97,14 @@ export function Header({ user, notifications = [], onToggleMobileMenu }: HeaderP
                 <span className="text-xs font-bold text-slate-800">System Notifications</span>
                 <span className="text-[10px] text-emerald-600 font-medium">Live Feed</span>
               </div>
-              <div className="py-2 space-y-2 max-h-60 overflow-y-auto">
-                <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs flex gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold text-amber-900">Ration Stock Alert</div>
-                    <div className="text-amber-700 text-[11px]">Canola Oil (18 tins) is approaching minimum reorder threshold.</div>
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs flex gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold text-emerald-900">Daily Menu Scheduled</div>
-                    <div className="text-emerald-700 text-[11px]">Today's meals prepared for 80+ children & staff.</div>
-                  </div>
-                </div>
+              <div className="py-2 space-y-2 max-h-60 overflow-y-auto" role="menu">
+                {notifications.length === 0 ? <div className="px-2 py-5 text-center text-xs text-slate-500">No new notifications.</div> : notifications.map((notification) => {
+                  const isWarning = notification.type === 'WARNING' || notification.type === 'ALERT';
+                  return <div key={notification.id} className={`p-2.5 rounded-lg border text-xs flex gap-2 ${isWarning ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`} role="menuitem">
+                    {isWarning ? <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" /> : <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
+                    <div><div className={`font-semibold ${isWarning ? 'text-amber-900' : 'text-emerald-900'}`}>{notification.title}</div><div className={`text-[11px] ${isWarning ? 'text-amber-700' : 'text-emerald-700'}`}>{notification.message}</div></div>
+                  </div>;
+                })}
               </div>
             </div>
           )}
