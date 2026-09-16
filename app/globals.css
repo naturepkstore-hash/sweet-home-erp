@@ -181,6 +181,23 @@ body {
   to { opacity: 1; transform: translateY(0); letter-spacing: normal; }
 }
 
+@keyframes loginParticles {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.2; }
+  50% { transform: translate3d(18px, -24px, 0) scale(1.04); opacity: 0.55; }
+  100% { transform: translate3d(-10px, 16px, 0) scale(1); opacity: 0.2; }
+}
+
+@keyframes loginScan {
+  0%, 100% { opacity: 0; transform: translateY(-45vh); }
+  45%, 65% { opacity: 0.5; }
+  100% { transform: translateY(45vh); }
+}
+
+@keyframes loginCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 /* Animation Utility Classes */
 .animate-fade-in {
   animation: fadeIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -240,6 +257,32 @@ body {
 .brand-intro-shell {
   animation: brandIntroShell 2600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+.login-stage::before,
+.login-stage::after {
+  content: '';
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(110, 231, 183, 0.12);
+  border-radius: 999px;
+  pointer-events: none;
+  animation: brandRingPulse 5s ease-in-out infinite;
+}
+
+.login-stage::before { transform: translate(-42vw, -28vh); }
+.login-stage::after { transform: translate(42vw, 28vh); animation-delay: 1.3s; }
+
+.login-particle-field {
+  opacity: 0.45;
+  background-image: radial-gradient(circle, rgba(167, 243, 208, 0.55) 1px, transparent 1px), radial-gradient(circle, rgba(251, 191, 36, 0.35) 1px, transparent 1px);
+  background-size: 86px 86px, 131px 131px;
+  background-position: 0 0, 36px 42px;
+  animation: loginParticles 8s ease-in-out infinite alternate;
+}
+
+.login-scanline { background: linear-gradient(90deg, transparent, rgba(110, 231, 183, 0.6), transparent); box-shadow: 0 0 22px rgba(110, 231, 183, 0.55); animation: loginScan 6s ease-in-out infinite; }
+.login-card { animation: scaleIn 520ms cubic-bezier(0.16, 1, 0.3, 1) both, loginCardFloat 7s ease-in-out 700ms infinite; }
 
 /* Staggered entrance delays */
 .stagger-1 { animation-delay: 40ms; }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 
 function BrandIntro({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
@@ -80,8 +80,10 @@ export default function LoginPage() {
   return (
     <>
       {showBrandIntro && <BrandIntro onComplete={() => setShowBrandIntro(false)} />}
-      <div className="min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700/30 flex flex-col md:flex-row animate-scale-in">
+      <div className="login-stage relative min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center overflow-hidden p-4 selection:bg-emerald-500 selection:text-white">
+      <div className="login-particle-field absolute inset-0 pointer-events-none" />
+      <div className="login-scanline absolute left-0 right-0 top-1/2 h-px pointer-events-none" />
+      <div className="login-card relative w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700/30 animate-scale-in">
         
         {/* Left Form Area */}
         <div className="w-full md:w-1/2 p-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
@@ -181,27 +183,6 @@ export default function LoginPage() {
 
           <div className="pt-6 border-t border-slate-100 text-[11px] text-slate-400 text-center">
             Official System of Pakistan Bait-ul-Maal (Government of Pakistan)
-          </div>
-        </div>
-
-        {/* Right Info */}
-        <div className="w-full md:w-1/2 bg-slate-900 p-8 sm:p-10 text-white flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-800 animate-fade-in-up stagger-1">
-          <div>
-            <h3 className="text-lg font-bold text-white mb-2">Authorized ERP Access</h3>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Use your assigned email address and password to access the ERP panel.
-            </p>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Authorized staff accounts with discrete RBAC permissions</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Zero-knowledge password hashing with bcrypt</span>
-            </div>
           </div>
         </div>
 
