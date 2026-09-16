@@ -1,8 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, User, AlertCircle, ArrowRight, CheckCircle2, Home } from 'lucide-react';
+
+function BrandIntro({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const timer = window.setTimeout(onComplete, 1600);
+    return () => window.clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950 text-white animate-fade-in" role="status" aria-label="Loading Sweet Home Multan ERP">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.16),transparent_42%)]" />
+      <div className="relative flex flex-col items-center">
+        <div className="brand-mark-reveal relative flex h-28 w-28 items-center justify-center rounded-[2rem] border border-emerald-300/30 bg-emerald-700 shadow-[0_0_70px_rgba(16,185,129,0.24)]">
+          <div className="brand-mark-ring absolute inset-[-14px] rounded-[2.5rem] border border-amber-300/50" />
+          <Shield className="h-16 w-16 text-white" strokeWidth={1.4} />
+          <Home className="absolute h-7 w-7 text-amber-300" strokeWidth={2.2} />
+        </div>
+        <div className="mt-8 text-center animate-fade-in-up stagger-2">
+          <p className="text-[11px] font-bold tracking-[0.28em] text-emerald-300">PAKISTAN BAIT-UL-MAAL</p>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight">Sweet Home Multan</h1>
+          <p className="mt-2 text-xs text-slate-400">Institutional Operations ERP</p>
+        </div>
+        <div className="mt-8 h-1 w-32 overflow-hidden rounded-full bg-white/10"><div className="brand-progress h-full rounded-full bg-amber-300" /></div>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +36,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBrandIntro, setShowBrandIntro] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowBrandIntro(false), 1600);
+    return () => window.clearTimeout(timer);
+  }, []);
 
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -42,13 +74,14 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
+    <>
+      {showBrandIntro && <BrandIntro onComplete={() => setShowBrandIntro(false)} />}
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700/30 flex flex-col md:flex-row animate-scale-in">
         
         {/* Left Form Area */}
         <div className="w-full md:w-1/2 p-8 sm:p-10 flex flex-col justify-between animate-fade-in-up">
           <div>
-            {/* Header / Seal */}
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-emerald-700 flex items-center justify-center text-white shadow-lg shadow-emerald-700/30 transition-transform duration-200 hover:scale-105">
                 <Shield className="w-7 h-7" />
@@ -170,5 +203,6 @@ export default function LoginPage() {
 
       </div>
     </div>
+    </>
   );
 }

@@ -114,6 +114,22 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes brandMarkReveal {
+  0% { opacity: 0; transform: translateY(12px) scale(0.82) rotate(-8deg); }
+  65% { opacity: 1; transform: translateY(0) scale(1.04) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes brandRingPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes brandProgress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
 /* Animation Utility Classes */
 .animate-fade-in {
   animation: fadeIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -141,6 +157,18 @@ body {
 
 .animate-shake {
   animation: shakeError 300ms ease-in-out forwards;
+}
+
+.brand-mark-reveal {
+  animation: brandMarkReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.brand-mark-ring {
+  animation: brandRingPulse 1200ms ease-in-out 120ms infinite;
+}
+
+.brand-progress {
+  animation: brandProgress 1500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Staggered entrance delays */
