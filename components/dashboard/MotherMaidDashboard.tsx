@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Baby, CheckCircle2, HeartPulse, Sparkles, ClipboardList, Bed, AlertCircle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { EmployeeDutyAssignments } from './EmployeeDutyAssignments';
+import { ComplaintsDashboard, DashboardComplaint } from './ComplaintsDashboard';
 
 interface MotherMaidDashboardProps {
   user: {
@@ -25,9 +26,10 @@ interface MotherMaidDashboardProps {
     bloodGroup: string | null;
     allergies: string | null;
   }[];
+  recentComplaints: DashboardComplaint[];
 }
 
-export function MotherMaidDashboard({ user, assignedChildren }: MotherMaidDashboardProps) {
+export function MotherMaidDashboard({ user, assignedChildren, recentComplaints }: MotherMaidDashboardProps) {
   const [tasks, setTasks] = useState([
     { id: 1, title: 'Fajr Prayer & Morning Child Hygiene Check (Teeth, Face, Cleanliness)', done: true },
     { id: 2, title: 'Breakfast Supervision & Meal Attendance in Dining Hall', done: true },
@@ -93,6 +95,8 @@ export function MotherMaidDashboard({ user, assignedChildren }: MotherMaidDashbo
       </div>
 
       <EmployeeDutyAssignments />
+
+      <ComplaintsDashboard complaints={recentComplaints} canManage={false} />
 
       {/* Grid: Care Checklist + Quick Health Observation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

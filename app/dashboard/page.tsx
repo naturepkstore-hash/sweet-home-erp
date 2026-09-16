@@ -9,6 +9,7 @@ import { KitchenDashboard } from '@/components/dashboard/KitchenDashboard';
 import { ServiceStaffDashboard } from '@/components/dashboard/ServiceStaffDashboard';
 import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { HRClerkDashboard } from '@/components/dashboard/HRClerkDashboard';
+import { DashboardComplaint } from '@/components/dashboard/ComplaintsDashboard';
 
 export default async function DashboardPage() {
   const user = await requireAuth();
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
     { id: 'aud-2', userEmail: 'farkhandabibi1986@gmail.com', action: 'CREATE', module: 'PURCHASES', details: 'Created PO-2026-0089 for monthly kitchen ration replenishment.', createdAt: new Date(Date.now() - 3600000 * 3) },
     { id: 'aud-3', userEmail: 'umerfarooqpbm5651@gmail.com', action: 'UPDATE', module: 'CHILDREN', details: 'Updated room and bed allocation for orphan admission record.', createdAt: new Date(Date.now() - 3600000 * 6) },
   ];
+  let recentComplaints: DashboardComplaint[] = [];
 
   try {
     const dbTotalChildren = await prisma.child.count({ where: { status: 'ACTIVE' } });
@@ -136,6 +138,24 @@ export default async function DashboardPage() {
     if (dbAudits && dbAudits.length > 0) {
       recentAudits = dbAudits;
     }
+
+    if (user.role === Role.INCHARGE || user.role === Role.ACCOUNT_ASSISTANT) {
+      const complaintRecords = await prisma.childComplaint.findMany({
+        include: { child: { select: { id: true, fullName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      });
+      recentComplaints = complaintRecords.map((complaint) => ({
+        id: complaint.id,
+        childId: complaint.child.id,
+        childName: complaint.child.fullName,
+        category: complaint.category,
+        description: complaint.description,
+        status: complaint.status as DashboardComplaint['status'],
+        reportedBy: complaint.reportedBy,
+        createdAt: complaint.createdAt,
+      }));
+    }
   } catch (dbErr) {
     console.warn('Could not query database in DashboardPage, using baseline data:', dbErr);
   }
@@ -162,6 +182,7 @@ export default async function DashboardPage() {
           recentPurchases={recentPurchases}
           recentAudits={recentAudits}
           lowStockItems={lowStockItems}
+          recentComplaints={recentComplaints}
         />
       )}
 
@@ -217,6 +238,7 @@ async function MotherMaidView({ user, employeeId }: { user: { id: string; fullNa
     { id: 'ch-2', childId: 'PBM-SHM-002', fullName: 'Ali Hassan', fatherGuardianName: 'Late Ghulam Rasool', dateOfBirth: new Date('2016-08-20'), bFormNo: '36302-2345678-3', status: 'ACTIVE', roomNumber: 'Room 101', bedNumber: 'Bed A-2', className: 'Class 4', bloodGroup: 'O+', allergies: 'Peanuts' },
     { id: 'ch-3', childId: 'PBM-SHM-003', fullName: 'Hamza Tariq', fatherGuardianName: 'Late Tariq Javed', dateOfBirth: new Date('2014-11-05'), bFormNo: '36302-3456789-5', status: 'ACTIVE', roomNumber: 'Room 102', bedNumber: 'Bed B-1', className: 'Class 6', bloodGroup: 'A+', allergies: 'None' },
   ];
+  let recentComplaints: any[] = [];
 
   try {
     let assignedChildren = [];
@@ -261,11 +283,28 @@ async function MotherMaidView({ user, employeeId }: { user: { id: string; fullNa
         bloodGroup: c.medicalRecord?.bloodGroup || null,
         allergies: c.medicalRecord?.allergies || null,
       }));
+
+      const complaints = await prisma.childComplaint.findMany({
+        where: { childId: { in: assignedChildren.map((child) => child.id) } },
+        include: { child: { select: { id: true, fullName: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      });
+      recentComplaints = complaints.map((complaint) => ({
+        id: complaint.id,
+        childId: complaint.child.id,
+        childName: complaint.child.fullName,
+        category: complaint.category,
+        description: complaint.description,
+        status: complaint.status,
+        reportedBy: complaint.reportedBy,
+        createdAt: complaint.createdAt,
+      }));
     }
   } catch (err) {
     console.warn('Could not fetch mother maid children from database:', err);
   }
 
-  return <MotherMaidDashboard user={user} assignedChildren={mappedChildren} />;
+  return <MotherMaidDashboard user={user} assignedChildren={mappedChildren} recentComplaints={recentComplaints} />;
 }
 

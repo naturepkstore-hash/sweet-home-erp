@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { formatPKR, formatDate } from '@/lib/utils';
+import { ComplaintsDashboard, DashboardComplaint } from './ComplaintsDashboard';
 
 interface InchargeDashboardProps {
   stats: {
@@ -61,6 +62,7 @@ interface InchargeDashboardProps {
     unit: string;
     categoryName: string;
   }[];
+  recentComplaints: DashboardComplaint[];
 }
 
 export function InchargeDashboard({
@@ -68,6 +70,7 @@ export function InchargeDashboard({
   recentPurchases,
   recentAudits,
   lowStockItems,
+  recentComplaints,
 }: InchargeDashboardProps) {
   const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0;
 
@@ -327,6 +330,8 @@ export function InchargeDashboard({
         </div>
 
       </div>
+
+      <ComplaintsDashboard complaints={recentComplaints} canManage />
 
       {/* Bottom Section: Recent Purchases Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">

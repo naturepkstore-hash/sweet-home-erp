@@ -90,6 +90,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const { currentUser } = await getAuthorizedChild(id);
+    if (currentUser.role !== Role.INCHARGE && currentUser.role !== Role.ACCOUNT_ASSISTANT) {
+      return NextResponse.json({ error: 'Only Incharge and Account Assistant can review complaints' }, { status: 403 });
+    }
     const body = await request.json();
     const complaintId = String(body.complaintId || '').trim();
     const status = String(body.status || '').trim();

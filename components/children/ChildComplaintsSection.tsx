@@ -20,7 +20,7 @@ const statusLabels: Record<Complaint['status'], string> = {
   RESOLVED: 'Resolved',
 };
 
-export function ChildComplaintsSection({ childId }: { childId: string }) {
+export function ChildComplaintsSection({ childId, canManage = false }: { childId: string; canManage?: boolean }) {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [category, setCategory] = useState('Behaviour');
   const [description, setDescription] = useState('');
@@ -129,9 +129,9 @@ export function ChildComplaintsSection({ childId }: { childId: string }) {
                   <p className="mt-2 text-[10px] text-slate-400">{formatDate(complaint.createdAt)}{complaint.reportedBy ? ` · ${complaint.reportedBy}` : ''}</p>
                 </div>
               </div>
-              <select value={complaint.status} onChange={(event) => updateStatus(complaint.id, event.target.value as Complaint['status'])} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700">
+              {canManage && <select value={complaint.status} onChange={(event) => updateStatus(complaint.id, event.target.value as Complaint['status'])} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700">
                 {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              </select>}
             </div>
           </div>
         ))}
