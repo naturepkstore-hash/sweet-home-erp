@@ -329,13 +329,13 @@ async function main() {
     // 1. Incharge (1)
     {
       username: 'incharge',
-      email: 'incharge@sweethome.pbm.gov.pk',
+      email: 'farah786rao@gmail.com',
       password: adminPassword,
       role: Role.INCHARGE,
       roleName: 'INCHARGE',
       deptCode: 'ADM',
       department: 'Administration & Head of Office',
-      fullName: 'Malik Muhammad Aslam',
+      fullName: 'Farah Malik',
       fatherHusbandName: 'Malik Noor Muhammad',
       cnic: '36302-1234567-1',
       address: 'House # 45, Officers Colony, Multan',
@@ -347,13 +347,13 @@ async function main() {
     // 2. Account Assistant (1)
     {
       username: 'accounts',
-      email: 'accounts@sweethome.pbm.gov.pk',
+      email: 'farkhandabibi1986@gmail.com',
       password: accountsPassword,
       role: Role.ACCOUNT_ASSISTANT,
       roleName: 'ACCOUNT_ASSISTANT',
       deptCode: 'FIN',
       department: 'Finance, Accounts & Procurement',
-      fullName: 'Muhammad Tariq Javed',
+      fullName: 'Farkhanda Bibi',
       fatherHusbandName: 'Muhammad Siddique',
       cnic: '36302-2345678-3',
       address: 'Street # 8, Shah Rukn-e-Alam Colony, Multan',
@@ -365,13 +365,13 @@ async function main() {
     // 3. HR / Representative (1)
     {
       username: 'hr',
-      email: 'hr@sweethome.pbm.gov.pk',
+      email: 'tehminamehr341@gmail.com',
       password: staffPassword,
       role: Role.HR_REPRESENTATIVE,
       roleName: 'HR_REPRESENTATIVE',
       deptCode: 'HR',
       department: 'Human Resources & Public Relations',
-      fullName: 'Syed Ali Raza Rizvi',
+      fullName: 'Tehmina Mehr',
       fatherHusbandName: 'Syed Ghulam Hussain',
       cnic: '36302-3456789-5',
       address: 'Mohalla Sadat, Old Shujabad Road, Multan',
@@ -383,13 +383,13 @@ async function main() {
     // 4. Clerk (1)
     {
       username: 'clerk',
-      email: 'clerk@sweethome.pbm.gov.pk',
+      email: 'umerfarooqpbm5651@gmail.com',
       password: staffPassword,
       role: Role.CLERK,
       roleName: 'CLERK',
       deptCode: 'REC',
       department: 'Admissions, Records & Education',
-      fullName: 'Abdul Rehman Qureshi',
+      fullName: 'Umer Farooq',
       fatherHusbandName: 'Bashir Ahmed Qureshi',
       cnic: '36302-4567890-7',
       address: 'Chungi No. 9, LMQ Road, Multan',
@@ -736,26 +736,33 @@ async function main() {
     const roleId = roleMap[s.roleName];
     const deptId = deptMap[s.deptCode];
 
-    const user = await prisma.user.upsert({
-      where: { email: s.email },
-      update: {
-        username: s.username,
-        password: s.password,
-        role: s.role,
-        roleId: roleId || undefined,
-        permissions: s.permissions,
-        status: 'ACTIVE',
-      },
-      create: {
-        username: s.username,
-        email: s.email,
-        password: s.password,
-        role: s.role,
-        roleId: roleId || undefined,
-        status: 'ACTIVE',
-        permissions: s.permissions,
-      },
+    const existingUser = await prisma.user.findFirst({
+      where: { OR: [{ email: s.email }, { username: s.username }] },
     });
+    const user = existingUser
+      ? await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            username: s.username,
+            email: s.email,
+            password: s.password,
+            role: s.role,
+            roleId: roleId || undefined,
+            permissions: s.permissions,
+            status: 'ACTIVE',
+          },
+        })
+      : await prisma.user.create({
+          data: {
+            username: s.username,
+            email: s.email,
+            password: s.password,
+            role: s.role,
+            roleId: roleId || undefined,
+            status: 'ACTIVE',
+            permissions: s.permissions,
+          },
+        });
 
     const emp = await prisma.employee.upsert({
       where: { cnic: s.cnic },
@@ -1123,52 +1130,52 @@ async function main() {
   const weeklyMenu = [
     {
       dayOfWeek: 'MONDAY',
-      breakfastMenu: 'Paratha, Fried Eggs / Omelette, Fresh Milk / Tea',
-      lunchMenu: 'Daal Chana Special, Steamed Rice, Fresh Salad, Yogurt Raita',
-      dinnerMenu: 'Chicken Karahi / Korma, Tandoori Roti, Fresh Mint Raita',
-      notes: 'Standard balanced nutritious menu for 100+ children and duty staff',
+      breakfastMenu: 'آملیٹ، پراٹھا، چائے',
+      lunchMenu: 'بیف آلو، روٹی، زردہ',
+      dinnerMenu: 'دال چنا، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'TUESDAY',
-      breakfastMenu: 'Bread Butter / Jam, Boiled Eggs, Sweet Milk',
-      lunchMenu: 'Aloo Gosht Gravy, Fresh Chapati, Seasonal Salad',
-      dinnerMenu: 'Daal Moong, Plain White Rice, Green Chutney',
-      notes: 'Wholesome dinner with digestive lentils and fresh salad',
+      breakfastMenu: 'آلو کے بھجئے، پراٹھا، چائے',
+      lunchMenu: 'سکس سبزی، روٹی، فروٹ',
+      dinnerMenu: 'لوبیا، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'WEDNESDAY',
-      breakfastMenu: 'Halwa Puri / Chana, Fresh Lassi / Sweet Milk',
-      lunchMenu: 'Chicken Pulao with Shami Kabab, Cucumber Raita',
-      dinnerMenu: 'Mix Vegetable Curry (Sabzi), Fresh Hot Tandoori Roti',
-      notes: 'Special Wednesday lunch with high protein chicken pulao',
+      breakfastMenu: 'چنے، پراٹھا، چائے',
+      lunchMenu: 'چکن بریانی، رائتہ',
+      dinnerMenu: 'مس دال، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'THURSDAY',
-      breakfastMenu: 'Stuffed Aloo Paratha, Curd / Chutney, Tea / Milk',
-      lunchMenu: 'Kadhi Pakora, Steamed White Basmati Rice, Onion Salad',
-      dinnerMenu: 'Chicken Haleem / Nihari, Naan, Lemon & Ginger Garnish',
-      notes: 'Traditional nutritious meals rich in vitamins and protein',
+      breakfastMenu: 'آلو انڈہ، پراٹھا، چائے',
+      lunchMenu: 'کڑھی پکوڑا، روٹی، حلوہ',
+      dinnerMenu: 'چکن قورمہ، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'FRIDAY',
-      breakfastMenu: 'Paratha, Omelette with Onion & Green Chillies, Tea / Hot Milk',
-      lunchMenu: 'Special Chicken Biryani, Shami Kabab, Zeera Raita, Cold Kheer / Sweet',
-      dinnerMenu: 'Daal Mash Special with Butter Tarka, Hot Tandoori Chapati',
-      notes: 'Special Friday Feast for all children and campus residents',
+      breakfastMenu: 'چنے، پراٹھا، چائے',
+      lunchMenu: 'چنا پلاؤ، رائتہ، فروٹ',
+      dinnerMenu: 'مس سبزی، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'SATURDAY',
-      breakfastMenu: 'Poached / Scrambled Eggs, Bread Slices, Butter, Warm Milk',
-      lunchMenu: 'Aloo Matar Keema Gravy, Fresh Tandoori Rotis, Salad',
-      dinnerMenu: 'Daal Masoor, Boiled Rice, Pickles / Achar, Salad',
-      notes: 'Nutrient-rich weekend dinner with seasonal fruits distribution',
+      breakfastMenu: 'آلو انڈہ، پراٹھا، چائے',
+      lunchMenu: 'دال ماش، روٹی',
+      dinnerMenu: 'چکن چاول، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
     {
       dayOfWeek: 'SUNDAY',
-      breakfastMenu: 'Special Puri Chana, Suji Ka Halwa, Sweet Lassi / Milk Tea',
-      lunchMenu: 'Chicken White Karahi, Nan / Roti, Mint Raita, Fresh Bananas / Apples',
-      dinnerMenu: 'Mixed Daal with Desi Ghee Tarka, Chapati, Fresh Green Salad',
-      notes: 'Holiday special breakfast and fruit distribution after sports activities',
+      breakfastMenu: 'چنے، پراٹھا، چائے',
+      lunchMenu: 'مٹر پلاؤ اور دال چاول',
+      dinnerMenu: 'لوبیا، روٹی',
+      notes: 'پاکستان بیت المال، PSH ملتان کا معیاری مینو 2024',
     },
   ];
 
